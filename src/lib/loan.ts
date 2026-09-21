@@ -136,7 +136,7 @@ export function periodicRepayment(
   return (principal * periodRate * growth) / (growth - 1)
 }
 
-function sanitise(value: number, fallback = 0): number {
+export function sanitise(value: number, fallback = 0): number {
   return Number.isFinite(value) && value > 0 ? value : fallback
 }
 
@@ -307,7 +307,7 @@ function amortise({
   return { balances, payments, offsetBalances, totalInterest, totalRepayments, periodsToRepay }
 }
 
-function toYearlyBalances(
+export function toYearlyBalances(
   balances: number[],
   payments: number[],
   offsetBalances: number[],
@@ -330,7 +330,7 @@ function toYearlyBalances(
   }))
 }
 
-function toMonthlyBalances(
+export function toMonthlyBalances(
   balances: number[],
   payments: number[],
   offsetBalances: number[],

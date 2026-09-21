@@ -31,6 +31,38 @@
   font-size: 15px;
 }
 
+/* ---------- Site header / calculator tabs ---------- */
+
+.site-header {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+}
+
+.page-tabs__button {
+  padding: 4px 2px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.page-tabs__button:hover {
+  color: var(--ink);
+}
+
+.page-tabs__button.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
 /* ---------- Layout ---------- */
 
 .layout {
@@ -214,6 +246,17 @@
 
 .advanced .form-grid {
   margin-top: 16px;
+}
+
+.form-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.form-hint--warning {
+  color: var(--accent);
 }
 
 /* ---------- Summary card ---------- */
@@ -439,6 +482,40 @@
   font-size: 13px;
   font-weight: 400;
   color: var(--muted);
+}
+
+.repayments-table__year-row {
+  cursor: pointer;
+  background: var(--surface-alt);
+}
+
+.repayments-table__year-row:hover {
+  background: var(--line-soft);
+}
+
+.repayments-table__year-row td {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.repayments-table__year-cell {
+  display: table-cell;
+}
+
+.repayments-table__chevron {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  transition: transform 0.15s ease;
+}
+
+.repayments-table__chevron.is-expanded {
+  transform: rotate(90deg);
+}
+
+.repayments-table__month-cell {
+  padding-left: 40px;
 }
 
 /* ---------- Chart ---------- */

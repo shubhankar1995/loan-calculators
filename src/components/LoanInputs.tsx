@@ -10,6 +10,7 @@ import { formatNumber, parseNumber } from '../lib/format'
 
 interface Props {
   amount: number
+  startDate: string
   termYears: number
   ratePercent: number
   repaymentType: RepaymentType
@@ -21,6 +22,7 @@ interface Props {
   offsetMonthlyContribution: number
   advancedOpen: boolean
   onAmountChange: (value: number) => void
+  onStartDateChange: (value: string) => void
   onTermChange: (value: number) => void
   onRateChange: (value: number) => void
   onRepaymentTypeChange: (value: RepaymentType) => void
@@ -35,6 +37,7 @@ interface Props {
 
 export function LoanInputs({
   amount,
+  startDate,
   termYears,
   ratePercent,
   repaymentType,
@@ -46,6 +49,7 @@ export function LoanInputs({
   offsetMonthlyContribution,
   advancedOpen,
   onAmountChange,
+  onStartDateChange,
   onTermChange,
   onRateChange,
   onRepaymentTypeChange,
@@ -117,6 +121,18 @@ export function LoanInputs({
                 onChange={(event) => onTermChange(parseNumber(event.target.value))}
               />
               <span className="control__suffix">years</span>
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="start-date">Start date</label>
+            <div className="control control--unit">
+              <input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(event) => onStartDateChange(event.target.value)}
+              />
             </div>
           </div>
 
