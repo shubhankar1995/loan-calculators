@@ -19,6 +19,11 @@ export function formatNumber(value: number): string {
   return plainNumber.format(Math.round(value))
 }
 
+/** e.g. 0.256 -> "26%". */
+export function formatPercent(value: number): string {
+  return `${Math.round(value * 100)}%`
+}
+
 /** Strips anything that isn't a digit or decimal point, e.g. "$400,000" -> 400000. */
 export function parseNumber(value: string): number {
   const cleaned = value.replace(/[^0-9.]/g, '')

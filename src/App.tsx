@@ -22,7 +22,7 @@ import {
 type View = 'table' | 'graph'
 
 export default function App() {
-  const [amount, setAmount] = useState(400000)
+  const [amount, setAmount] = useState(112800)
   const [termYears, setTermYears] = useState(30)
   const [ratePercent, setRatePercent] = useState(6.29)
   const [repaymentType, setRepaymentType] = useState<RepaymentType>('principal-and-interest')

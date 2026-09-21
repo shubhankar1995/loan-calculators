@@ -316,6 +316,13 @@
   color: var(--ink);
 }
 
+.repayments-table__percent {
+  margin-left: 6px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
 /* ---------- Chart ---------- */
 
 .chart {

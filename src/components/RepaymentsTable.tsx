@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { MonthlyBalance, YearlyBalance } from '../lib/loan'
-import { formatCurrency } from '../lib/format'
+import { formatCurrency, formatPercent } from '../lib/format'
 
 type Granularity = 'yearly' | 'monthly'
 
@@ -77,7 +77,12 @@ export function RepaymentsTable({
               <td className="numeric">{formatCurrency(row.repayment)}</td>
               <td className="numeric">{formatCurrency(row.balance)}</td>
               {showEquity && (
-                <td className="numeric">{formatCurrency(homeValue - row.balance)}</td>
+                <td className="numeric">
+                  {formatCurrency(homeValue - row.balance)}
+                  <span className="repayments-table__percent">
+                    {formatPercent((homeValue - row.balance) / homeValue)}
+                  </span>
+                </td>
               )}
             </tr>
           ))}
