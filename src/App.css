@@ -259,6 +259,72 @@
   color: var(--accent);
 }
 
+.stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.stage-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stage-field__name {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 15px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.stage-field__name:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.stage-field__percent {
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.stage-field__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stage-field__remove:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.stage-field__remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stage-list__add {
+  margin-top: 14px;
+}
+
 /* ---------- Summary card ---------- */
 
 .summary__hero {

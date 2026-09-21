@@ -113,6 +113,19 @@ export function HouseAndLandInputs({
     onStagesChange(stages.map((stage, i) => (i === index ? { ...stage, percent: value } : stage)))
   }
 
+  const handleStageName = (index: number, value: string) => {
+    onStagesChange(stages.map((stage, i) => (i === index ? { ...stage, name: value } : stage)))
+  }
+
+  const handleAddStage = () => {
+    onStagesChange([...stages, { name: `Stage ${stages.length + 1}`, percent: 0 }])
+  }
+
+  const handleRemoveStage = (index: number) => {
+    if (stages.length <= 1) return
+    onStagesChange(stages.filter((_, i) => i !== index))
+  }
+
   const stagesTotal = stages.reduce((sum, stage) => sum + stage.percent, 0)
 
   return (
@@ -274,22 +287,40 @@ export function HouseAndLandInputs({
         onToggle={(event) => onAdvancedOpenChange(event.currentTarget.open)}
       >
         <summary>Build stages</summary>
-        <div className="form-grid">
+        <div className="stage-list">
           {stages.map((stage, index) => (
-            <div className="field" key={stage.name}>
-              <label htmlFor={`stage-${stage.name}`}>{stage.name}</label>
-              <div className="control control--unit">
+            <div className="stage-field" key={index}>
+              <input
+                className="stage-field__name"
+                type="text"
+                aria-label="Stage name"
+                value={stage.name}
+                onChange={(event) => handleStageName(index, event.target.value)}
+              />
+              <div className="control control--unit stage-field__percent">
                 <input
-                  id={`stage-${stage.name}`}
+                  aria-label={`${stage.name || 'Stage'} percent`}
                   inputMode="numeric"
                   value={stage.percent}
                   onChange={(event) => handleStagePercent(index, parseNumber(event.target.value))}
                 />
                 <span className="control__suffix">%</span>
               </div>
+              <button
+                type="button"
+                className="stage-field__remove"
+                onClick={() => handleRemoveStage(index)}
+                disabled={stages.length <= 1}
+                aria-label={`Remove ${stage.name || 'stage'}`}
+              >
+                &times;
+              </button>
             </div>
           ))}
         </div>
+        <button type="button" className="summary__cta stage-list__add" onClick={handleAddStage}>
+          + Add stage
+        </button>
         <p className={`form-hint${stagesTotal === 100 ? '' : ' form-hint--warning'}`}>
           Stages total {stagesTotal}%{stagesTotal !== 100 ? ' — percentages are rescaled to 100% automatically.' : '.'}
         </p>
