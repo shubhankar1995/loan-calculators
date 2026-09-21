@@ -178,7 +178,11 @@ export default function App() {
             }
           />
         ) : (
-          <RepaymentsTable caption={caption} rows={result.yearlyBalances} />
+          <RepaymentsTable
+            caption={caption}
+            yearlyBalances={result.yearlyBalances}
+            monthlyBalances={result.monthlyBalances}
+          />
         )}
       </main>
     </div>

@@ -56,6 +56,12 @@ describe('calculateLoan - principal and interest', () => {
       expect(balances[i]).toBeLessThan(balances[i - 1])
     }
   })
+
+  it('produces one table row per month, counting the term down', () => {
+    expect(result.monthlyBalances).toHaveLength(361)
+    expect(result.monthlyBalances[0]).toMatchObject({ monthsRemaining: 360, balance: 400000 })
+    expect(result.monthlyBalances.at(-1)).toMatchObject({ monthsRemaining: 0, balance: 0 })
+  })
 })
 
 describe('calculateLoan - interest only for an initial period', () => {
@@ -113,6 +119,11 @@ describe('calculateLoan - additional repayments', () => {
   it('stops the yearly table once the loan is cleared', () => {
     expect(result.yearlyBalances.at(-1)?.balance).toBe(0)
     expect(result.yearlyBalances.filter((row) => row.balance === 0)).toHaveLength(1)
+  })
+
+  it('stops the monthly table once the loan is cleared', () => {
+    expect(result.monthlyBalances.at(-1)?.balance).toBe(0)
+    expect(result.monthlyBalances.filter((row) => row.balance === 0)).toHaveLength(1)
   })
 
   it('pays down an interest only loan by the extra amount', () => {

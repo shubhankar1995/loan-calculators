@@ -62,6 +62,19 @@ export interface YearlyBalance {
   yearsRemaining: number
   /** Principal still owing at that point. */
   balance: number
+  /** Total repaid during that year. */
+  repayment: number
+}
+
+export interface MonthlyBalance {
+  /** Whole months since the loan started. */
+  monthsElapsed: number
+  /** Months left of the original term. */
+  monthsRemaining: number
+  /** Principal still owing at that point. */
+  balance: number
+  /** Total repaid during that month. */
+  repayment: number
 }
 
 export interface LoanResult {
@@ -82,6 +95,7 @@ export interface LoanResult {
   /** Balance at the end of every period, index 0 being the opening balance. */
   balances: number[]
   yearlyBalances: YearlyBalance[]
+  monthlyBalances: MonthlyBalance[]
 }
 
 /**
@@ -161,7 +175,18 @@ export function calculateLoan(input: LoanInput): LoanResult {
     periodsSaved: baseline.periodsToRepay - withExtra.periodsToRepay,
     interestSaved: baseline.totalInterest - withExtra.totalInterest,
     balances: withExtra.balances,
-    yearlyBalances: toYearlyBalances(withExtra.balances, periodsPerYear, termYears),
+    yearlyBalances: toYearlyBalances(
+      withExtra.balances,
+      withExtra.payments,
+      periodsPerYear,
+      termYears,
+    ),
+    monthlyBalances: toMonthlyBalances(
+      withExtra.balances,
+      withExtra.payments,
+      periodsPerYear,
+      termYears,
+    ),
   }
 }
 
@@ -185,6 +210,7 @@ function amortise({
   extra,
 }: AmortiseArgs) {
   const balances: number[] = [amount]
+  const payments: number[] = [0]
   let balance = amount
   let totalInterest = 0
   let totalRepayments = 0
@@ -207,35 +233,87 @@ function amortise({
     totalRepayments += payment
     periodsToRepay = period
     balances.push(balance)
+    payments.push(payment)
   }
 
   // Interest-only loans leave the principal outstanding as a final balloon.
   if (balance > 0) {
     totalRepayments += balance
+    payments[payments.length - 1] += balance
     balances[balances.length - 1] = 0
     balance = 0
   }
 
-  return { balances, totalInterest, totalRepayments, periodsToRepay }
+  return { balances, payments, totalInterest, totalRepayments, periodsToRepay }
 }
 
 function toYearlyBalances(
   balances: number[],
+  payments: number[],
   periodsPerYear: number,
   termYears: number,
 ): YearlyBalance[] {
-  const rows: YearlyBalance[] = []
   const lastYear = Math.ceil((balances.length - 1) / periodsPerYear)
+  return sampleBalances(
+    balances,
+    payments,
+    lastYear,
+    (year) => Math.round(year * periodsPerYear),
+  ).map(({ step, balance, repayment }) => ({
+    yearsElapsed: step,
+    yearsRemaining: Math.max(Math.round(termYears) - step, 0),
+    balance,
+    repayment,
+  }))
+}
 
-  for (let year = 0; year <= lastYear; year += 1) {
-    const index = Math.min(year * periodsPerYear, balances.length - 1)
-    rows.push({
-      yearsElapsed: year,
-      yearsRemaining: Math.max(Math.round(termYears) - year, 0),
-      balance: balances[index],
-    })
-    if (balances[index] === 0) break
+function toMonthlyBalances(
+  balances: number[],
+  payments: number[],
+  periodsPerYear: number,
+  termYears: number,
+): MonthlyBalance[] {
+  const totalMonths = Math.round(termYears * 12)
+  const periodsPerMonth = periodsPerYear / 12
+  const lastMonth = Math.ceil((balances.length - 1) / periodsPerMonth)
+  return sampleBalances(
+    balances,
+    payments,
+    lastMonth,
+    (month) => Math.round(month * periodsPerMonth),
+  ).map(({ step, balance, repayment }) => ({
+    monthsElapsed: step,
+    monthsRemaining: Math.max(totalMonths - step, 0),
+    balance,
+    repayment,
+  }))
+}
+
+/** Samples `balances` at every step from 0 to `lastStep`, stopping once the balance hits zero. */
+function sampleBalances(
+  balances: number[],
+  payments: number[],
+  lastStep: number,
+  stepToIndex: (step: number) => number,
+): Array<{ step: number; balance: number; repayment: number }> {
+  const rows: Array<{ step: number; balance: number; repayment: number }> = []
+  let previousIndex = 0
+
+  for (let step = 0; step <= lastStep; step += 1) {
+    const index = Math.min(stepToIndex(step), balances.length - 1)
+    const balance = balances[index]
+    const repayment = step === 0 ? 0 : sumPayments(payments, previousIndex + 1, index)
+    rows.push({ step, balance, repayment })
+    previousIndex = index
+    if (balance === 0) break
   }
 
   return rows
+}
+
+/** Sums repayments made over periods `from` to `to` inclusive, so a step covers every period since the last one. */
+function sumPayments(payments: number[], from: number, to: number): number {
+  let sum = 0
+  for (let index = from; index <= to; index += 1) sum += payments[index] ?? 0
+  return sum
 }

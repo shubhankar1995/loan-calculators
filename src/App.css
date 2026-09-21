@@ -252,6 +252,34 @@
   font-weight: 600;
 }
 
+.panel__toggle {
+  display: flex;
+  gap: 14px;
+  padding: 14px 20px;
+  background: #e4e6e8;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.panel__toggle-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  color: var(--link);
+  cursor: pointer;
+}
+
+.panel__toggle-button:hover {
+  text-decoration: underline;
+}
+
+.panel__toggle-button.is-active {
+  color: var(--ink);
+  font-weight: 600;
+  cursor: default;
+  text-decoration: none;
+}
+
 .repayments-table {
   width: 100%;
   border-collapse: collapse;
