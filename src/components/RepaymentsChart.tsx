@@ -18,8 +18,8 @@ interface Props {
    * from a land price during construction.
    */
   propertyValues?: number[]
-  /** Overrides the auto-generated equity legend caption. */
-  equityLegend?: string
+  /** Overrides the auto-generated home value legend caption. */
+  homeValueLegend?: string
 }
 
 const WIDTH = 1000
@@ -35,21 +35,32 @@ export function RepaymentsChart({
   homeValue = 0,
   homeValueGrowthPercent = 0,
   propertyValues,
-  equityLegend,
+  homeValueLegend,
 }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const showEquity = propertyValues ? propertyValues.some((value) => value > 0) : homeValue > 0
 
-  const { points, path, markers, equityPoints, equityPath, equityMarkers, maxValue } = useMemo(() => {
-    const equity = showEquity
-      ? balances.map((balance, index) => {
-          const value = propertyValues
+  const {
+    points,
+    path,
+    markers,
+    equityPoints,
+    equityPath,
+    equityMarkers,
+    homeValuePoints,
+    homeValuePath,
+    homeValueMarkers,
+    maxValue,
+  } = useMemo(() => {
+    const homeValues = showEquity
+      ? balances.map((_balance, index) =>
+          propertyValues
             ? propertyValues[index] ?? 0
-            : projectedHomeValue(homeValue, homeValueGrowthPercent, index / periodsPerYear)
-          return value - balance
-        })
+            : projectedHomeValue(homeValue, homeValueGrowthPercent, index / periodsPerYear),
+        )
       : []
-    const max = Math.max(...balances, ...equity, 1)
+    const equity = homeValues.map((value, index) => value - balances[index])
+    const max = Math.max(...balances, ...homeValues, 1)
     const lastIndex = Math.max(balances.length - 1, 1)
     const plotWidth = WIDTH - PADDING.left - PADDING.right
     const plotHeight = HEIGHT - PADDING.top - PADDING.bottom
@@ -63,6 +74,7 @@ export function RepaymentsChart({
 
     const mapped = balances.map((balance, index) => toPoint(balance, index))
     const equityMapped = equity.map((value, index) => toPoint(value, index))
+    const homeValueMapped = homeValues.map((value, index) => toPoint(value, index))
 
     // Eight evenly spaced markers, landing exactly on both endpoints.
     const markerCount = Math.min(8, mapped.length)
@@ -83,12 +95,16 @@ export function RepaymentsChart({
       equityPoints: equityMapped,
       equityPath: toPath(equityMapped),
       equityMarkers: markerIndexes.map((i) => equityMapped[i]),
+      homeValuePoints: homeValueMapped,
+      homeValuePath: toPath(homeValueMapped),
+      homeValueMarkers: markerIndexes.map((i) => homeValueMapped[i]),
       maxValue: max,
     }
   }, [balances, homeValue, homeValueGrowthPercent, periodsPerYear, propertyValues, showEquity])
 
   const hovered = hoverIndex === null ? null : points[hoverIndex]
   const hoveredEquity = hoverIndex === null || !showEquity ? null : equityPoints[hoverIndex]
+  const hoveredHomeValue = hoverIndex === null || !showEquity ? null : homeValuePoints[hoverIndex]
 
   const yAxisTicks = Array.from({ length: GRIDLINE_STEPS + 1 }, (_, i) =>
     (maxValue * (GRIDLINE_STEPS - i)) / GRIDLINE_STEPS,
@@ -104,7 +120,9 @@ export function RepaymentsChart({
   return (
     <div className="chart">
       <div className="chart__header">
-        <p className="chart__title">Loan balance and equity over time</p>
+        <p className="chart__title">
+          {showEquity ? 'Loan balance, home value and equity over time' : 'Loan balance over time'}
+        </p>
         <p className="chart__max">Scale to {formatCurrency(maxValue)}</p>
       </div>
       <div className="chart__canvas">
@@ -127,13 +145,20 @@ export function RepaymentsChart({
             role="img"
             aria-label={
               showEquity
-                ? `Principal remaining and equity over ${termYears} years`
+                ? `Principal remaining, home value and equity over ${termYears} years`
                 : `Principal remaining over ${termYears} years`
             }
             onMouseMove={handleMove}
             onMouseLeave={() => setHoverIndex(null)}
           >
             <path className="chart__line" d={path} vectorEffect="non-scaling-stroke" />
+            {showEquity && (
+              <path
+                className="chart__line chart__line--home-value"
+                d={homeValuePath}
+                vectorEffect="non-scaling-stroke"
+              />
+            )}
             {showEquity && (
               <path
                 className="chart__line chart__line--equity"
@@ -160,6 +185,14 @@ export function RepaymentsChart({
             />
           ))}
           {showEquity &&
+            homeValueMarkers.map((marker) => (
+              <span
+                key={marker.index}
+                className="chart__marker chart__marker--home-value"
+                style={{ left: `${(marker.x / WIDTH) * 100}%`, top: `${(marker.y / HEIGHT) * 100}%` }}
+              />
+            ))}
+          {showEquity &&
             equityMarkers.map((marker) => (
               <span
                 key={marker.index}
@@ -173,6 +206,11 @@ export function RepaymentsChart({
               style={{ left: `${(hovered.x / WIDTH) * 100}%`, top: `${(hovered.y / HEIGHT) * 100}%` }}
             >
               <strong>{formatCurrency(hovered.value)}</strong>
+              {hoveredHomeValue && (
+                <strong className="chart__tooltip-home-value">
+                  {formatCurrency(hoveredHomeValue.value)} home value
+                </strong>
+              )}
               {hoveredEquity && (
                 <strong className="chart__tooltip-equity">
                   {formatCurrency(hoveredEquity.value)} equity
@@ -194,12 +232,18 @@ export function RepaymentsChart({
         </span>
         {showEquity && (
           <span className="legend-chip">
-            <span className="legend-chip__dot legend-chip__dot--equity" />
-            Equity{' '}
-            {equityLegend ??
+            <span className="legend-chip__dot legend-chip__dot--home-value" />
+            Est. home value{' '}
+            {homeValueLegend ??
               (homeValueGrowthPercent > 0
                 ? `(assumes the home value grows ${homeValueGrowthPercent}% a year)`
                 : '(assumes a constant home value)')}
+          </span>
+        )}
+        {showEquity && (
+          <span className="legend-chip">
+            <span className="legend-chip__dot legend-chip__dot--equity" />
+            Equity
           </span>
         )}
       </div>

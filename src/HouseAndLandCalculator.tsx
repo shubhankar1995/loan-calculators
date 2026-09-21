@@ -71,7 +71,7 @@ export function HouseAndLandCalculator() {
     result.postConstructionRepayment,
   )} a month`
 
-  const equityLegend = `(ramps from the land value up to the completed home value as construction finishes, then ${
+  const homeValueLegend = `(ramps from the land value up to the completed home value as construction finishes, then ${
     homeValueGrowthPercent > 0 ? `grows ${homeValueGrowthPercent}% a year` : 'stays constant'
   })`
 
@@ -188,7 +188,7 @@ export function HouseAndLandCalculator() {
             periodsPerYear={12}
             termYears={termYears}
             propertyValues={result.propertyValues}
-            equityLegend={equityLegend}
+            homeValueLegend={homeValueLegend}
             legend={`Interest only during construction (${constructionMonths} months), then principal and interest`}
           />
         ) : (
@@ -196,7 +196,6 @@ export function HouseAndLandCalculator() {
             caption={caption}
             startDate={startDate}
             monthlyBalances={result.monthlyBalances}
-            propertyValues={result.propertyValues}
           />
         )}
       </section>

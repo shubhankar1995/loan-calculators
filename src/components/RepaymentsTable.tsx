@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react'
-import { projectedHomeValue, type MonthlyBalance } from '../lib/loan'
-import { addMonths, formatCurrency, formatMonthYear, formatPercent, parseISODate } from '../lib/format'
+import { type MonthlyBalance } from '../lib/loan'
+import { addMonths, formatCurrency, formatMonthYear, parseISODate } from '../lib/format'
 
 interface Row {
   key: number
@@ -9,7 +9,6 @@ interface Row {
   balance: number
   repayment: number
   offsetBalance: number
-  projectedHomeValue: number
 }
 
 interface YearGroup {
@@ -22,33 +21,10 @@ interface Props {
   /** Date the loan starts, as an "yyyy-MM-dd" string, used to turn elapsed periods into calendar dates. */
   startDate: string
   monthlyBalances: MonthlyBalance[]
-  /** Home value used to show equity alongside the principal owing. Omit or zero to hide the column. */
-  homeValue?: number
-  /** Assumed annual growth in home value, compounded. */
-  homeValueGrowthPercent?: number
-  /**
-   * Precomputed property value at each month (index 0 being the opening balance), overriding
-   * the homeValue/growth projection — use when the value doesn't simply compound, e.g. ramping
-   * up from a land price during construction.
-   */
-  propertyValues?: number[]
 }
 
-export function RepaymentsTable({
-  caption,
-  startDate,
-  monthlyBalances,
-  homeValue = 0,
-  homeValueGrowthPercent = 0,
-  propertyValues,
-}: Props) {
-  const showEquity = propertyValues ? propertyValues.some((value) => value > 0) : homeValue > 0
+export function RepaymentsTable({ caption, startDate, monthlyBalances }: Props) {
   const start = parseISODate(startDate)
-
-  const valueAt = (monthsElapsed: number): number =>
-    propertyValues
-      ? propertyValues[monthsElapsed] ?? 0
-      : projectedHomeValue(homeValue, homeValueGrowthPercent, monthsElapsed / 12)
 
   const rows: Row[] = monthlyBalances.map((row) => {
     const date = addMonths(start, row.monthsElapsed)
@@ -59,7 +35,6 @@ export function RepaymentsTable({
       balance: row.balance,
       repayment: row.repayment,
       offsetBalance: row.offsetBalance,
-      projectedHomeValue: valueAt(row.monthsElapsed),
     }
   })
 
@@ -110,16 +85,6 @@ export function RepaymentsTable({
                 Offset balance
               </th>
             )}
-            {showEquity && (
-              <th scope="col" className="numeric">
-                Est. home value
-              </th>
-            )}
-            {showEquity && (
-              <th scope="col" className="numeric">
-                Equity
-              </th>
-            )}
           </tr>
         </thead>
         <tbody>
@@ -148,20 +113,6 @@ export function RepaymentsTable({
                       {showOffset && (
                         <td className="numeric">{formatCurrency(summary.offsetBalance)}</td>
                       )}
-                      {showEquity && (
-                        <td className="numeric">{formatCurrency(summary.projectedHomeValue)}</td>
-                      )}
-                      {showEquity && (
-                        <td className="numeric">
-                          {formatCurrency(summary.projectedHomeValue - summary.balance)}
-                          <span className="repayments-table__percent">
-                            {formatPercent(
-                              (summary.projectedHomeValue - summary.balance) /
-                                summary.projectedHomeValue,
-                            )}
-                          </span>
-                        </td>
-                      )}
                     </tr>
                     {!isCollapsed &&
                       group.rows.map((row) => (
@@ -171,7 +122,6 @@ export function RepaymentsTable({
                           row={row}
                           indent
                           showOffset={showOffset}
-                          showEquity={showEquity}
                         />
                       ))}
                   </Fragment>
@@ -188,11 +138,10 @@ interface RepaymentRowProps {
   number: number
   row: Row
   showOffset: boolean
-  showEquity: boolean
   indent?: boolean
 }
 
-function RepaymentRow({ number, row, showOffset, showEquity, indent }: RepaymentRowProps) {
+function RepaymentRow({ number, row, showOffset, indent }: RepaymentRowProps) {
   return (
     <tr>
       <td>{number}</td>
@@ -200,15 +149,6 @@ function RepaymentRow({ number, row, showOffset, showEquity, indent }: Repayment
       <td className="numeric">{formatCurrency(row.repayment)}</td>
       <td className="numeric">{formatCurrency(row.balance)}</td>
       {showOffset && <td className="numeric">{formatCurrency(row.offsetBalance)}</td>}
-      {showEquity && <td className="numeric">{formatCurrency(row.projectedHomeValue)}</td>}
-      {showEquity && (
-        <td className="numeric">
-          {formatCurrency(row.projectedHomeValue - row.balance)}
-          <span className="repayments-table__percent">
-            {formatPercent((row.projectedHomeValue - row.balance) / row.projectedHomeValue)}
-          </span>
-        </td>
-      )}
     </tr>
   )
 }

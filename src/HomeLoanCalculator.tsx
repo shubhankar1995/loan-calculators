@@ -200,8 +200,6 @@ export function HomeLoanCalculator() {
             caption={caption}
             startDate={startDate}
             monthlyBalances={result.monthlyBalances}
-            homeValue={homeValue}
-            homeValueGrowthPercent={homeValueGrowthPercent}
           />
         )}
       </section>
