@@ -1,5 +1,27 @@
-export type RepaymentType = 'principal-and-interest' | 'interest-only'
+export type RepaymentType =
+  | 'principal-and-interest'
+  | 'interest-only-1'
+  | 'interest-only-2'
+  | 'interest-only-3'
+  | 'interest-only-4'
+  | 'interest-only-5'
+
 export type Frequency = 'weekly' | 'fortnightly' | 'monthly'
+
+export const REPAYMENT_TYPE_LABELS: Record<RepaymentType, string> = {
+  'principal-and-interest': 'Principal and interest',
+  'interest-only-1': 'Interest only 1 year',
+  'interest-only-2': 'Interest only 2 years',
+  'interest-only-3': 'Interest only 3 years',
+  'interest-only-4': 'Interest only 4 years',
+  'interest-only-5': 'Interest only 5 years',
+}
+
+/** Number of years an interest-only period lasts before switching to principal and interest, 0 for P&I. */
+export function interestOnlyYears(repaymentType: RepaymentType): number {
+  if (repaymentType === 'principal-and-interest') return 0
+  return Number(repaymentType.split('-').pop())
+}
 
 export const PERIODS_PER_YEAR: Record<Frequency, number> = {
   weekly: 52,
@@ -47,6 +69,8 @@ export interface LoanResult {
   scheduledRepayment: number
   /** Scheduled repayment plus the voluntary extra. */
   totalPeriodRepayment: number
+  /** Repayment once an interest-only period ends and P&I resumes, undefined when the whole term is interest only. */
+  postInterestOnlyRepayment?: number
   totalRepayments: number
   totalInterest: number
   /** Periods actually taken to clear the debt (<= term when paying extra). */
@@ -90,19 +114,27 @@ export function calculateLoan(input: LoanInput): LoanResult {
   const periodsPerYear = PERIODS_PER_YEAR[input.frequency]
   const totalPeriods = Math.round(termYears * periodsPerYear)
   const periodRate = annualRate / periodsPerYear
-  const interestOnly = input.repaymentType === 'interest-only'
+  const ioPeriods = Math.min(
+    Math.round(interestOnlyYears(input.repaymentType) * periodsPerYear),
+    totalPeriods,
+  )
+  const amortisingPeriods = totalPeriods - ioPeriods
 
-  const scheduledRepayment = interestOnly
-    ? amount * periodRate
-    : periodicRepayment(amount, periodRate, totalPeriods)
+  const scheduledRepayment =
+    ioPeriods > 0 ? amount * periodRate : periodicRepayment(amount, periodRate, amortisingPeriods)
+  const postInterestOnlyRepayment =
+    ioPeriods > 0 && amortisingPeriods > 0
+      ? periodicRepayment(amount, periodRate, amortisingPeriods)
+      : undefined
 
   const withExtra = amortise({
     amount,
     periodRate,
-    totalPeriods,
+    ioPeriods,
+    amortisingPeriods,
     scheduledRepayment,
+    postInterestOnlyRepayment,
     extra,
-    interestOnly,
   })
 
   // Baseline without extra repayments, so we can show what the extra buys.
@@ -111,16 +143,18 @@ export function calculateLoan(input: LoanInput): LoanResult {
       ? amortise({
           amount,
           periodRate,
-          totalPeriods,
+          ioPeriods,
+          amortisingPeriods,
           scheduledRepayment,
+          postInterestOnlyRepayment,
           extra: 0,
-          interestOnly,
         })
       : withExtra
 
   return {
     scheduledRepayment,
     totalPeriodRepayment: scheduledRepayment + extra,
+    postInterestOnlyRepayment,
     totalRepayments: withExtra.totalRepayments,
     totalInterest: withExtra.totalInterest,
     periodsToRepay: withExtra.periodsToRepay,
@@ -134,30 +168,36 @@ export function calculateLoan(input: LoanInput): LoanResult {
 interface AmortiseArgs {
   amount: number
   periodRate: number
-  totalPeriods: number
+  ioPeriods: number
+  amortisingPeriods: number
   scheduledRepayment: number
+  postInterestOnlyRepayment?: number
   extra: number
-  interestOnly: boolean
 }
 
 function amortise({
   amount,
   periodRate,
-  totalPeriods,
+  ioPeriods,
+  amortisingPeriods,
   scheduledRepayment,
+  postInterestOnlyRepayment,
   extra,
-  interestOnly,
 }: AmortiseArgs) {
   const balances: number[] = [amount]
   let balance = amount
   let totalInterest = 0
   let totalRepayments = 0
   let periodsToRepay = 0
+  const totalPeriods = ioPeriods + amortisingPeriods
 
   for (let period = 1; period <= totalPeriods && balance > 0; period += 1) {
     const interest = balance * periodRate
+    const inInterestOnlyPhase = period <= ioPeriods
     // Interest-only repayments never touch the principal, so only the extra does.
-    const target = interestOnly ? interest + extra : scheduledRepayment + extra
+    const target = inInterestOnlyPhase
+      ? interest + extra
+      : (postInterestOnlyRepayment ?? scheduledRepayment) + extra
     const payment = Math.min(target, balance + interest)
 
     balance = balance + interest - payment

@@ -1,5 +1,5 @@
 import { type ChangeEvent } from 'react'
-import type { RepaymentType } from '../lib/loan'
+import { REPAYMENT_TYPE_LABELS, type RepaymentType } from '../lib/loan'
 import { formatNumber, parseNumber } from '../lib/format'
 
 interface Props {
@@ -63,8 +63,11 @@ export function LoanInputs({
             value={repaymentType}
             onChange={(event) => onRepaymentTypeChange(event.target.value as RepaymentType)}
           >
-            <option value="principal-and-interest">Principal and interest</option>
-            <option value="interest-only">Interest only</option>
+            {Object.entries(REPAYMENT_TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </div>
       </div>

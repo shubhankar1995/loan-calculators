@@ -7,6 +7,7 @@ import {
   FREQUENCY_LABELS,
   PERIODS_PER_YEAR,
   calculateLoan,
+  interestOnlyYears,
   type Frequency,
   type RepaymentType,
 } from './lib/loan'
@@ -43,7 +44,8 @@ export default function App() {
   )
 
   const periodsPerYear = PERIODS_PER_YEAR[frequency]
-  const interestOnly = repaymentType === 'interest-only'
+  const ioYears = interestOnlyYears(repaymentType)
+  const interestOnly = ioYears > 0
   const repaymentLabel = interestOnly
     ? 'Interest only repayments'
     : 'Principal and interest repayments'
@@ -90,6 +92,14 @@ export default function App() {
             <p className="stat__label">Total interest charged</p>
             <p className="stat__amount">{formatCurrency(result.totalInterest)}</p>
           </div>
+          {result.postInterestOnlyRepayment !== undefined && (
+            <div className="stat">
+              <p className="stat__label">
+                Repayments after interest only period ({FREQUENCY_ADVERBS[frequency]})
+              </p>
+              <p className="stat__amount">{formatRepayment(result.postInterestOnlyRepayment)}</p>
+            </div>
+          )}
 
           <div className="stat">
             <label className="stat__label" htmlFor="frequency">
@@ -136,8 +146,11 @@ export default function App() {
 
         {interestOnly && (
           <p className="callout callout--muted">
-            Interest only repayments don't reduce the principal, so the{' '}
-            {formatCurrency(amount)} borrowed is still owing at the end of the term.
+            Interest only repayments for the first {ioYears} year{ioYears === 1 ? '' : 's'} don't
+            reduce the principal.{' '}
+            {result.postInterestOnlyRepayment
+              ? 'After that, repayments switch to principal and interest for the rest of the term.'
+              : `The ${formatCurrency(amount)} borrowed is still owing at the end of the term.`}
           </p>
         )}
 
@@ -158,7 +171,11 @@ export default function App() {
             balances={result.balances}
             periodsPerYear={periodsPerYear}
             termYears={termYears}
-            legend={interestOnly ? 'Interest only (Fixed)' : 'Principal and interest (Fixed)'}
+            legend={
+              interestOnly
+                ? `Interest only ${ioYears} year${ioYears === 1 ? '' : 's'}, then principal and interest`
+                : 'Principal and interest (Fixed)'
+            }
           />
         ) : (
           <RepaymentsTable caption={caption} rows={result.yearlyBalances} />

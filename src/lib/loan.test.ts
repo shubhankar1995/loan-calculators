@@ -58,16 +58,41 @@ describe('calculateLoan - principal and interest', () => {
   })
 })
 
-describe('calculateLoan - interest only', () => {
-  const result = calculateLoan({ ...base, repaymentType: 'interest-only' })
+describe('calculateLoan - interest only for an initial period', () => {
+  const result = calculateLoan({ ...base, repaymentType: 'interest-only-5' })
 
-  it('charges interest on the full principal every period', () => {
+  it('charges interest on the full principal during the interest-only period', () => {
     expect(result.scheduledRepayment).toBeCloseTo((400000 * 0.0629) / 12, 6)
-    expect(Math.round(result.totalInterest)).toBe(754800)
   })
 
+  it("doesn't reduce the balance during the interest-only period", () => {
+    const monthsInterestOnly = 5 * 12
+    expect(result.balances[monthsInterestOnly]).toBe(base.amount)
+    expect(result.balances[monthsInterestOnly - 1]).toBe(base.amount)
+  })
+
+  it('switches to principal and interest for the remaining term', () => {
+    expect(result.postInterestOnlyRepayment).toBeCloseTo(
+      periodicRepayment(400000, 0.0629 / 12, 25 * 12),
+      6,
+    )
+    expect(result.periodsToRepay).toBe(360)
+    expect(result.balances.at(-1)).toBe(0)
+  })
+
+  it('charges more total interest than an equivalent principal and interest loan', () => {
+    const principalAndInterest = calculateLoan(base)
+    expect(result.totalInterest).toBeGreaterThan(principalAndInterest.totalInterest)
+  })
+})
+
+describe('calculateLoan - interest only for the whole term', () => {
+  const result = calculateLoan({ ...base, termYears: 5, repaymentType: 'interest-only-5' })
+
   it('leaves the principal owing as a balloon at the end of the term', () => {
+    expect(result.postInterestOnlyRepayment).toBeUndefined()
     expect(Math.round(result.totalRepayments - result.totalInterest)).toBe(base.amount)
+    expect(Math.round(result.totalInterest)).toBe(125800)
   })
 })
 
@@ -91,9 +116,15 @@ describe('calculateLoan - additional repayments', () => {
   })
 
   it('pays down an interest only loan by the extra amount', () => {
-    const io = calculateLoan({ ...base, repaymentType: 'interest-only', extraRepayment: 500 })
+    const io = calculateLoan({
+      ...base,
+      termYears: 5,
+      repaymentType: 'interest-only-5',
+      extraRepayment: 500,
+    })
+    const ioNoExtra = calculateLoan({ ...base, termYears: 5, repaymentType: 'interest-only-5' })
     expect(io.balances.at(-1)).toBe(0)
-    expect(io.totalInterest).toBeLessThan(754800)
+    expect(io.totalInterest).toBeLessThan(ioNoExtra.totalInterest)
   })
 })
 
