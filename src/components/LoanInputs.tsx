@@ -9,12 +9,16 @@ interface Props {
   repaymentType: RepaymentType
   homeValue: number
   homeValueGrowthPercent: number
+  offsetBalance: number
+  offsetMonthlyContribution: number
   onAmountChange: (value: number) => void
   onTermChange: (value: number) => void
   onRateChange: (value: number) => void
   onRepaymentTypeChange: (value: RepaymentType) => void
   onHomeValueChange: (value: number) => void
   onHomeValueGrowthChange: (value: number) => void
+  onOffsetBalanceChange: (value: number) => void
+  onOffsetMonthlyContributionChange: (value: number) => void
 }
 
 export function LoanInputs({
@@ -24,12 +28,16 @@ export function LoanInputs({
   repaymentType,
   homeValue,
   homeValueGrowthPercent,
+  offsetBalance,
+  offsetMonthlyContribution,
   onAmountChange,
   onTermChange,
   onRateChange,
   onRepaymentTypeChange,
   onHomeValueChange,
   onHomeValueGrowthChange,
+  onOffsetBalanceChange,
+  onOffsetMonthlyContributionChange,
 }: Props) {
   const handleAmount = (event: ChangeEvent<HTMLInputElement>) => {
     onAmountChange(parseNumber(event.target.value))
@@ -37,6 +45,14 @@ export function LoanInputs({
 
   const handleHomeValue = (event: ChangeEvent<HTMLInputElement>) => {
     onHomeValueChange(parseNumber(event.target.value))
+  }
+
+  const handleOffsetBalance = (event: ChangeEvent<HTMLInputElement>) => {
+    onOffsetBalanceChange(parseNumber(event.target.value))
+  }
+
+  const handleOffsetMonthlyContribution = (event: ChangeEvent<HTMLInputElement>) => {
+    onOffsetMonthlyContributionChange(parseNumber(event.target.value))
   }
 
   return (
@@ -49,6 +65,28 @@ export function LoanInputs({
           inputMode="numeric"
           value={`$${formatNumber(amount)}`}
           onChange={handleAmount}
+        />
+      </div>
+
+      <div className="field field--amount">
+        <label htmlFor="offset-balance">Offset account balance</label>
+        <input
+          id="offset-balance"
+          className="control"
+          inputMode="numeric"
+          value={`$${formatNumber(offsetBalance)}`}
+          onChange={handleOffsetBalance}
+        />
+      </div>
+
+      <div className="field field--amount">
+        <label htmlFor="offset-monthly-contribution">Added to offset each month</label>
+        <input
+          id="offset-monthly-contribution"
+          className="control"
+          inputMode="numeric"
+          value={`$${formatNumber(offsetMonthlyContribution)}`}
+          onChange={handleOffsetMonthlyContribution}
         />
       </div>
 

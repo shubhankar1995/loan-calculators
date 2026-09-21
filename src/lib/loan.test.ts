@@ -8,6 +8,8 @@ const base = {
   repaymentType: 'principal-and-interest',
   frequency: 'monthly',
   extraRepayment: 0,
+  offsetBalance: 0,
+  offsetMonthlyContribution: 0,
 } as const
 
 describe('periodicRepayment', () => {
@@ -136,6 +138,28 @@ describe('calculateLoan - additional repayments', () => {
     const ioNoExtra = calculateLoan({ ...base, termYears: 5, repaymentType: 'interest-only-5' })
     expect(io.balances.at(-1)).toBe(0)
     expect(io.totalInterest).toBeLessThan(ioNoExtra.totalInterest)
+  })
+})
+
+describe('calculateLoan - offset account', () => {
+  const result = calculateLoan({ ...base, offsetBalance: 100000, offsetMonthlyContribution: 500 })
+
+  it('reduces interest charged and shortens the term', () => {
+    const noOffset = calculateLoan(base)
+    expect(result.totalInterest).toBeLessThan(noOffset.totalInterest)
+    expect(result.periodsToRepay).toBeLessThan(noOffset.periodsToRepay)
+    expect(result.offsetInterestSaved).toBeGreaterThan(0)
+    expect(result.offsetPeriodsSaved).toBeGreaterThan(0)
+  })
+
+  it('still repays exactly the principal borrowed', () => {
+    expect(Math.round(result.totalRepayments - result.totalInterest)).toBe(base.amount)
+  })
+
+  it('does not charge negative interest once the offset exceeds the balance', () => {
+    const fullyOffset = calculateLoan({ ...base, offsetBalance: base.amount * 2 })
+    expect(fullyOffset.totalInterest).toBe(0)
+    expect(fullyOffset.periodsToRepay).toBeLessThan(360)
   })
 })
 

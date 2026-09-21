@@ -64,6 +64,10 @@ export interface LoanInput {
   frequency: Frequency
   /** Voluntary extra paid on top of every scheduled repayment. */
   extraRepayment: number
+  /** Starting balance of a linked offset account, reduces the interest-bearing balance. */
+  offsetBalance: number
+  /** Amount added to the offset account every month. */
+  offsetMonthlyContribution: number
 }
 
 export interface YearlyBalance {
@@ -103,6 +107,10 @@ export interface LoanResult {
   periodsSaved: number
   /** Interest saved by the extra repayments. */
   interestSaved: number
+  /** Periods saved thanks to the offset account, holding extra repayments constant. */
+  offsetPeriodsSaved: number
+  /** Interest saved thanks to the offset account. */
+  offsetInterestSaved: number
   /** Balance at the end of every period, index 0 being the opening balance. */
   balances: number[]
   yearlyBalances: YearlyBalance[]
@@ -135,6 +143,7 @@ export function calculateLoan(input: LoanInput): LoanResult {
     ? Math.max(input.annualRatePercent, 0) / 100
     : 0
   const extra = sanitise(input.extraRepayment)
+  const offsetBalance = sanitise(input.offsetBalance)
 
   const periodsPerYear = PERIODS_PER_YEAR[input.frequency]
   const totalPeriods = Math.round(termYears * periodsPerYear)
@@ -144,6 +153,8 @@ export function calculateLoan(input: LoanInput): LoanResult {
     totalPeriods,
   )
   const amortisingPeriods = totalPeriods - ioPeriods
+  // The contribution is quoted per month, spread evenly across periods of the chosen frequency.
+  const offsetContributionPerPeriod = (sanitise(input.offsetMonthlyContribution) * 12) / periodsPerYear
 
   const scheduledRepayment =
     ioPeriods > 0 ? amount * periodRate : periodicRepayment(amount, periodRate, amortisingPeriods)
@@ -160,6 +171,8 @@ export function calculateLoan(input: LoanInput): LoanResult {
     scheduledRepayment,
     postInterestOnlyRepayment,
     extra,
+    offsetBalance,
+    offsetContributionPerPeriod,
   })
 
   // Baseline without extra repayments, so we can show what the extra buys.
@@ -173,6 +186,24 @@ export function calculateLoan(input: LoanInput): LoanResult {
           scheduledRepayment,
           postInterestOnlyRepayment,
           extra: 0,
+          offsetBalance,
+          offsetContributionPerPeriod,
+        })
+      : withExtra
+
+  // Baseline without an offset account, so we can show what the offset buys.
+  const noOffset =
+    offsetBalance > 0 || offsetContributionPerPeriod > 0
+      ? amortise({
+          amount,
+          periodRate,
+          ioPeriods,
+          amortisingPeriods,
+          scheduledRepayment,
+          postInterestOnlyRepayment,
+          extra,
+          offsetBalance: 0,
+          offsetContributionPerPeriod: 0,
         })
       : withExtra
 
@@ -185,6 +216,8 @@ export function calculateLoan(input: LoanInput): LoanResult {
     periodsToRepay: withExtra.periodsToRepay,
     periodsSaved: baseline.periodsToRepay - withExtra.periodsToRepay,
     interestSaved: baseline.totalInterest - withExtra.totalInterest,
+    offsetPeriodsSaved: noOffset.periodsToRepay - withExtra.periodsToRepay,
+    offsetInterestSaved: noOffset.totalInterest - withExtra.totalInterest,
     balances: withExtra.balances,
     yearlyBalances: toYearlyBalances(
       withExtra.balances,
@@ -209,6 +242,8 @@ interface AmortiseArgs {
   scheduledRepayment: number
   postInterestOnlyRepayment?: number
   extra: number
+  offsetBalance: number
+  offsetContributionPerPeriod: number
 }
 
 function amortise({
@@ -219,17 +254,22 @@ function amortise({
   scheduledRepayment,
   postInterestOnlyRepayment,
   extra,
+  offsetBalance,
+  offsetContributionPerPeriod,
 }: AmortiseArgs) {
   const balances: number[] = [amount]
   const payments: number[] = [0]
   let balance = amount
+  let offset = offsetBalance
   let totalInterest = 0
   let totalRepayments = 0
   let periodsToRepay = 0
   const totalPeriods = ioPeriods + amortisingPeriods
 
   for (let period = 1; period <= totalPeriods && balance > 0; period += 1) {
-    const interest = balance * periodRate
+    // Interest is only charged on the balance not covered by the offset account.
+    const interestBearingBalance = Math.max(balance - offset, 0)
+    const interest = interestBearingBalance * periodRate
     const inInterestOnlyPhase = period <= ioPeriods
     // Interest-only repayments never touch the principal, so only the extra does.
     const target = inInterestOnlyPhase
@@ -239,6 +279,7 @@ function amortise({
 
     balance = balance + interest - payment
     if (balance < 1e-6) balance = 0
+    offset += offsetContributionPerPeriod
 
     totalInterest += interest
     totalRepayments += payment

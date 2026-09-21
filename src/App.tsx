@@ -30,6 +30,8 @@ export default function App() {
   const [extraRepayment, setExtraRepayment] = useState(0)
   const [homeValue, setHomeValue] = useState(1280000)
   const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
+  const [offsetBalance, setOffsetBalance] = useState(0)
+  const [offsetMonthlyContribution, setOffsetMonthlyContribution] = useState(0)
   const [view, setView] = useState<View>('graph')
 
   const result = useMemo(
@@ -41,8 +43,19 @@ export default function App() {
         repaymentType,
         frequency,
         extraRepayment,
+        offsetBalance,
+        offsetMonthlyContribution,
       }),
-    [amount, termYears, ratePercent, repaymentType, frequency, extraRepayment],
+    [
+      amount,
+      termYears,
+      ratePercent,
+      repaymentType,
+      frequency,
+      extraRepayment,
+      offsetBalance,
+      offsetMonthlyContribution,
+    ],
   )
 
   const periodsPerYear = PERIODS_PER_YEAR[frequency]
@@ -67,12 +80,16 @@ export default function App() {
           repaymentType={repaymentType}
           homeValue={homeValue}
           homeValueGrowthPercent={homeValueGrowthPercent}
+          offsetBalance={offsetBalance}
+          offsetMonthlyContribution={offsetMonthlyContribution}
           onAmountChange={setAmount}
           onTermChange={setTermYears}
           onRateChange={setRatePercent}
           onRepaymentTypeChange={setRepaymentType}
           onHomeValueChange={setHomeValue}
           onHomeValueGrowthChange={setHomeValueGrowthPercent}
+          onOffsetBalanceChange={setOffsetBalance}
+          onOffsetMonthlyContributionChange={setOffsetMonthlyContribution}
         />
 
         <h2 className="section-title">Your {FREQUENCY_ADVERBS[frequency]} repayments</h2>
@@ -147,6 +164,14 @@ export default function App() {
             Paying an extra {formatCurrency(extraRepayment)} {FREQUENCY_ADVERBS[frequency]} clears
             the loan {describeDuration(result.periodsSaved, periodsPerYear)} sooner and saves{' '}
             {formatCurrency(result.interestSaved)} in interest.
+          </p>
+        )}
+
+        {(offsetBalance > 0 || offsetMonthlyContribution > 0) && result.offsetPeriodsSaved > 0 && (
+          <p className="callout">
+            Your offset account clears the loan{' '}
+            {describeDuration(result.offsetPeriodsSaved, periodsPerYear)} sooner and saves{' '}
+            {formatCurrency(result.offsetInterestSaved)} in interest.
           </p>
         )}
 
