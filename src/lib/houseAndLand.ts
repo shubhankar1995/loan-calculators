@@ -15,11 +15,11 @@ export interface ConstructionStage {
 
 /** A typical progress-payment schedule for an Australian house and land package. */
 export const DEFAULT_CONSTRUCTION_STAGES: ConstructionStage[] = [
-  { name: 'Slab', percent: 10 },
-  { name: 'Frame', percent: 15 },
-  { name: 'Lock-up', percent: 35 },
-  { name: 'Fixing', percent: 20 },
-  { name: 'Completion', percent: 20 },
+  { name: 'Slab', percent: 20 },
+  { name: 'Frame', percent: 25 },
+  { name: 'Lock-up', percent: 25 },
+  { name: 'Fixing', percent: 25 },
+  { name: 'Completion', percent: 5 },
 ]
 
 export interface HouseAndLandInput {

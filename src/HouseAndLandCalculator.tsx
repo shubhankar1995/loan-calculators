@@ -12,14 +12,14 @@ import { formatCurrency, formatRepayment, todayISODate } from './lib/format'
 type View = 'graph' | 'table'
 
 export function HouseAndLandCalculator() {
-  const [landAmount, setLandAmount] = useState(450000)
-  const [constructionAmount, setConstructionAmount] = useState(400000)
+  const [landAmount, setLandAmount] = useState(780000)
+  const [constructionAmount, setConstructionAmount] = useState(501660)
   const [startDate, setStartDate] = useState(() => todayISODate())
   const [termYears, setTermYears] = useState(30)
   const [ratePercent, setRatePercent] = useState(6.29)
   const [constructionMonths, setConstructionMonths] = useState(9)
   const [stages, setStages] = useState<ConstructionStage[]>(DEFAULT_CONSTRUCTION_STAGES)
-  const [homeValue, setHomeValue] = useState(900000)
+  const [homeValue, setHomeValue] = useState(1281660)
   const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [view, setView] = useState<View>('graph')
