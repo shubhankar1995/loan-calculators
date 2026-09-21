@@ -28,6 +28,7 @@ export default function App() {
   const [repaymentType, setRepaymentType] = useState<RepaymentType>('principal-and-interest')
   const [frequency, setFrequency] = useState<Frequency>('monthly')
   const [extraRepayment, setExtraRepayment] = useState(0)
+  const [homeValue, setHomeValue] = useState(0)
   const [view, setView] = useState<View>('graph')
 
   const result = useMemo(
@@ -134,6 +135,20 @@ export default function App() {
               />
             </div>
           </div>
+          <div className="stat">
+            <label className="stat__label" htmlFor="home-value">
+              Home value (for equity)
+            </label>
+            <div className="control control--prefixed">
+              <span className="control__prefix">$</span>
+              <input
+                id="home-value"
+                inputMode="numeric"
+                value={formatNumber(homeValue)}
+                onChange={(event) => setHomeValue(parseNumber(event.target.value))}
+              />
+            </div>
+          </div>
         </div>
 
         {extraRepayment > 0 && result.periodsSaved > 0 && (
@@ -182,6 +197,7 @@ export default function App() {
             caption={caption}
             yearlyBalances={result.yearlyBalances}
             monthlyBalances={result.monthlyBalances}
+            homeValue={homeValue}
           />
         )}
       </main>

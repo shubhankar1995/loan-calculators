@@ -8,10 +8,18 @@ interface Props {
   caption: string
   yearlyBalances: YearlyBalance[]
   monthlyBalances: MonthlyBalance[]
+  /** Assumed constant home value, used to show equity alongside the principal owing. Omit or zero to hide the column. */
+  homeValue?: number
 }
 
-export function RepaymentsTable({ caption, yearlyBalances, monthlyBalances }: Props) {
+export function RepaymentsTable({
+  caption,
+  yearlyBalances,
+  monthlyBalances,
+  homeValue = 0,
+}: Props) {
   const [granularity, setGranularity] = useState<Granularity>('yearly')
+  const showEquity = homeValue > 0
 
   const rows =
     granularity === 'yearly'
@@ -55,6 +63,11 @@ export function RepaymentsTable({ caption, yearlyBalances, monthlyBalances }: Pr
             <th scope="col" className="numeric">
               Principal remaining
             </th>
+            {showEquity && (
+              <th scope="col" className="numeric">
+                Equity
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -63,6 +76,9 @@ export function RepaymentsTable({ caption, yearlyBalances, monthlyBalances }: Pr
               <td>{row.remaining}</td>
               <td className="numeric">{formatCurrency(row.repayment)}</td>
               <td className="numeric">{formatCurrency(row.balance)}</td>
+              {showEquity && (
+                <td className="numeric">{formatCurrency(homeValue - row.balance)}</td>
+              )}
             </tr>
           ))}
         </tbody>
