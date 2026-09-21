@@ -185,7 +185,6 @@ export function HouseAndLandCalculator() {
           <RepaymentsTable
             caption={caption}
             startDate={startDate}
-            yearlyBalances={result.yearlyBalances}
             monthlyBalances={result.monthlyBalances}
             propertyValues={result.propertyValues}
           />

@@ -199,7 +199,6 @@ export function HomeLoanCalculator() {
           <RepaymentsTable
             caption={caption}
             startDate={startDate}
-            yearlyBalances={result.yearlyBalances}
             monthlyBalances={result.monthlyBalances}
             homeValue={homeValue}
             homeValueGrowthPercent={homeValueGrowthPercent}

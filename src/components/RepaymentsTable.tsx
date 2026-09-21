@@ -1,15 +1,6 @@
 import { Fragment, useState } from 'react'
-import { projectedHomeValue, type MonthlyBalance, type YearlyBalance } from '../lib/loan'
-import {
-  addMonths,
-  formatCurrency,
-  formatMonthYear,
-  formatPercent,
-  formatYear,
-  parseISODate,
-} from '../lib/format'
-
-type Granularity = 'yearly' | 'monthly'
+import { projectedHomeValue, type MonthlyBalance } from '../lib/loan'
+import { addMonths, formatCurrency, formatMonthYear, formatPercent, parseISODate } from '../lib/format'
 
 interface Row {
   key: number
@@ -30,7 +21,6 @@ interface Props {
   caption: string
   /** Date the loan starts, as an "yyyy-MM-dd" string, used to turn elapsed periods into calendar dates. */
   startDate: string
-  yearlyBalances: YearlyBalance[]
   monthlyBalances: MonthlyBalance[]
   /** Home value used to show equity alongside the principal owing. Omit or zero to hide the column. */
   homeValue?: number
@@ -47,14 +37,11 @@ interface Props {
 export function RepaymentsTable({
   caption,
   startDate,
-  yearlyBalances,
   monthlyBalances,
   homeValue = 0,
   homeValueGrowthPercent = 0,
   propertyValues,
 }: Props) {
-  const [granularity, setGranularity] = useState<Granularity>('yearly')
-  const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
   const showEquity = propertyValues ? propertyValues.some((value) => value > 0) : homeValue > 0
   const start = parseISODate(startDate)
 
@@ -63,46 +50,34 @@ export function RepaymentsTable({
       ? propertyValues[monthsElapsed] ?? 0
       : projectedHomeValue(homeValue, homeValueGrowthPercent, monthsElapsed / 12)
 
-  const rows: Row[] =
-    granularity === 'yearly'
-      ? yearlyBalances.map((row) => {
-          const date = addMonths(start, row.yearsElapsed * 12)
-          return {
-            key: row.yearsElapsed,
-            date: formatYear(date),
-            year: date.getFullYear(),
-            balance: row.balance,
-            repayment: row.repayment,
-            offsetBalance: row.offsetBalance,
-            projectedHomeValue: valueAt(row.yearsElapsed * 12),
-          }
-        })
-      : monthlyBalances.map((row) => {
-          const date = addMonths(start, row.monthsElapsed)
-          return {
-            key: row.monthsElapsed,
-            date: formatMonthYear(date),
-            year: date.getFullYear(),
-            balance: row.balance,
-            repayment: row.repayment,
-            offsetBalance: row.offsetBalance,
-            projectedHomeValue: valueAt(row.monthsElapsed),
-          }
-        })
+  const rows: Row[] = monthlyBalances.map((row) => {
+    const date = addMonths(start, row.monthsElapsed)
+    return {
+      key: row.monthsElapsed,
+      date: formatMonthYear(date),
+      year: date.getFullYear(),
+      balance: row.balance,
+      repayment: row.repayment,
+      offsetBalance: row.offsetBalance,
+      projectedHomeValue: valueAt(row.monthsElapsed),
+    }
+  })
 
   const showOffset = rows.some((row) => row.offsetBalance > 0)
 
   const yearGroups: YearGroup[] = []
-  if (granularity === 'monthly') {
-    for (const row of rows) {
-      const lastGroup = yearGroups[yearGroups.length - 1]
-      if (lastGroup && lastGroup.year === row.year) {
-        lastGroup.rows.push(row)
-      } else {
-        yearGroups.push({ year: row.year, rows: [row] })
-      }
+  for (const row of rows) {
+    const lastGroup = yearGroups[yearGroups.length - 1]
+    if (lastGroup && lastGroup.year === row.year) {
+      lastGroup.rows.push(row)
+    } else {
+      yearGroups.push({ year: row.year, rows: [row] })
     }
   }
+
+  const [collapsedYears, setCollapsedYears] = useState<Set<number>>(
+    () => new Set(yearGroups.map((group) => group.year)),
+  )
 
   function toggleYear(year: number) {
     setCollapsedYears((prev) => {
@@ -117,29 +92,15 @@ export function RepaymentsTable({
     <div>
       <div className="chart__header">
         <p className="chart__title">{caption}</p>
-        <div className="tabs" role="tablist">
-          <GranularityButton
-            active={granularity === 'yearly'}
-            onClick={() => setGranularity('yearly')}
-          >
-            Yearly
-          </GranularityButton>
-          <GranularityButton
-            active={granularity === 'monthly'}
-            onClick={() => setGranularity('monthly')}
-          >
-            Monthly
-          </GranularityButton>
-        </div>
       </div>
       <div className="table-wrap">
       <table className="repayments-table">
         <thead>
           <tr>
             <th scope="col">#</th>
-            <th scope="col">{granularity === 'yearly' ? 'Year' : 'Month'}</th>
+            <th scope="col">Month</th>
             <th scope="col" className="numeric">
-              {granularity === 'yearly' ? 'Paid that year' : 'Paid that month'}
+              Paid that month
             </th>
             <th scope="col" className="numeric">
               Principal remaining
@@ -162,17 +123,7 @@ export function RepaymentsTable({
           </tr>
         </thead>
         <tbody>
-          {granularity === 'yearly'
-            ? rows.map((row, index) => (
-                <RepaymentRow
-                  key={row.key}
-                  number={index + 1}
-                  row={row}
-                  showOffset={showOffset}
-                  showEquity={showEquity}
-                />
-              ))
-            : yearGroups.map((group) => {
+          {yearGroups.map((group, groupIndex) => {
                 const isCollapsed = collapsedYears.has(group.year)
                 const summary = group.rows[group.rows.length - 1]
                 const totalRepayment = group.rows.reduce((sum, row) => sum + row.repayment, 0)
@@ -182,7 +133,8 @@ export function RepaymentsTable({
                       className="repayments-table__year-row"
                       onClick={() => toggleYear(group.year)}
                     >
-                      <td colSpan={2} className="repayments-table__year-cell">
+                      <td>{groupIndex + 1}</td>
+                      <td className="repayments-table__year-cell">
                         <span
                           className={`repayments-table__chevron${isCollapsed ? '' : ' is-expanded'}`}
                           aria-hidden="true"
@@ -258,25 +210,5 @@ function RepaymentRow({ number, row, showOffset, showEquity, indent }: Repayment
         </td>
       )}
     </tr>
-  )
-}
-
-interface GranularityButtonProps {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}
-
-function GranularityButton({ active, onClick, children }: GranularityButtonProps) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      className={`tabs__button${active ? ' is-active' : ''}`}
-      onClick={onClick}
-      aria-selected={active}
-    >
-      {children}
-    </button>
   )
 }
