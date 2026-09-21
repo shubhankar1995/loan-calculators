@@ -355,6 +355,10 @@
   stroke-linejoin: round;
 }
 
+.chart__line--equity {
+  stroke: var(--accent-equity);
+}
+
 .chart__crosshair {
   stroke: var(--line);
   stroke-width: 1;
@@ -370,6 +374,10 @@
   border-radius: 50%;
   background: var(--surface);
   pointer-events: none;
+}
+
+.chart__marker--equity {
+  border-color: var(--accent-equity);
 }
 
 .chart__tooltip {
@@ -391,6 +399,10 @@
   color: #c9ccce;
 }
 
+.chart__tooltip-equity {
+  color: var(--accent-equity);
+}
+
 .chart__axis {
   display: flex;
   justify-content: space-between;
@@ -408,11 +420,19 @@
   color: var(--ink-soft);
 }
 
+.chart__legend + .chart__legend {
+  margin-top: 8px;
+}
+
 .chart__legend-dot {
   width: 9px;
   height: 9px;
   border: 1.5px solid var(--muted);
   border-radius: 50%;
+}
+
+.chart__legend-dot--equity {
+  border-color: var(--accent-equity);
 }
 
 /* ---------- Small screens ---------- */

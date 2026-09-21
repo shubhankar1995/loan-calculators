@@ -7,46 +7,66 @@ interface Props {
   periodsPerYear: number
   termYears: number
   legend: string
+  /** Assumed constant home value, used to plot equity alongside the principal owing. Omit or zero to hide the line. */
+  homeValue?: number
 }
 
 const WIDTH = 1000
 const HEIGHT = 420
 const PADDING = { top: 24, right: 24, bottom: 8, left: 8 }
 
-export function RepaymentsChart({ balances, periodsPerYear, termYears, legend }: Props) {
+export function RepaymentsChart({
+  balances,
+  periodsPerYear,
+  termYears,
+  legend,
+  homeValue = 0,
+}: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
+  const showEquity = homeValue > 0
 
-  const { points, path, markers, maxBalance } = useMemo(() => {
-    const max = Math.max(...balances, 1)
+  const { points, path, markers, equityPoints, equityPath, equityMarkers, maxValue } = useMemo(() => {
+    const equity = showEquity ? balances.map((balance) => homeValue - balance) : []
+    const max = Math.max(...balances, ...equity, 1)
     const lastIndex = Math.max(balances.length - 1, 1)
     const plotWidth = WIDTH - PADDING.left - PADDING.right
     const plotHeight = HEIGHT - PADDING.top - PADDING.bottom
 
-    const mapped = balances.map((balance, index) => ({
+    const toPoint = (value: number, index: number) => ({
       index,
-      balance,
+      value,
       x: PADDING.left + (index / lastIndex) * plotWidth,
-      y: PADDING.top + (1 - balance / max) * plotHeight,
-    }))
+      y: PADDING.top + (1 - value / max) * plotHeight,
+    })
+
+    const mapped = balances.map((balance, index) => toPoint(balance, index))
+    const equityMapped = equity.map((value, index) => toPoint(value, index))
 
     // Eight evenly spaced markers, landing exactly on both endpoints.
     const markerCount = Math.min(8, mapped.length)
-    const markerPoints =
+    const markerIndexes =
       markerCount < 2
-        ? mapped
+        ? mapped.map((point) => point.index)
         : Array.from({ length: markerCount }, (_, i) =>
-            mapped[Math.round((i / (markerCount - 1)) * lastIndex)],
+            Math.round((i / (markerCount - 1)) * lastIndex),
           )
+
+    const toPath = (mappedPoints: typeof mapped) =>
+      mappedPoints.map((point, i) => `${i === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ')
 
     return {
       points: mapped,
-      path: mapped.map((point, i) => `${i === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' '),
-      markers: markerPoints,
-      maxBalance: max,
+      path: toPath(mapped),
+      markers: markerIndexes.map((i) => mapped[i]),
+      equityPoints: equityMapped,
+      equityPath: toPath(equityMapped),
+      equityMarkers: markerIndexes.map((i) => equityMapped[i]),
+      maxValue: max,
     }
-  }, [balances])
+  }, [balances, homeValue, showEquity])
 
   const hovered = hoverIndex === null ? null : points[hoverIndex]
+  const hoveredEquity = hoverIndex === null || !showEquity ? null : equityPoints[hoverIndex]
 
   const handleMove = (event: React.MouseEvent<SVGSVGElement>) => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -57,17 +77,28 @@ export function RepaymentsChart({ balances, periodsPerYear, termYears, legend }:
 
   return (
     <div className="chart">
-      <p className="chart__max">{formatCurrency(maxBalance)}</p>
+      <p className="chart__max">{formatCurrency(maxValue)}</p>
       <div className="chart__canvas">
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           preserveAspectRatio="none"
           role="img"
-          aria-label={`Principal remaining over ${termYears} years`}
+          aria-label={
+            showEquity
+              ? `Principal remaining and equity over ${termYears} years`
+              : `Principal remaining over ${termYears} years`
+          }
           onMouseMove={handleMove}
           onMouseLeave={() => setHoverIndex(null)}
         >
           <path className="chart__line" d={path} vectorEffect="non-scaling-stroke" />
+          {showEquity && (
+            <path
+              className="chart__line chart__line--equity"
+              d={equityPath}
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
           {hovered && (
             <line
               className="chart__crosshair"
@@ -86,12 +117,25 @@ export function RepaymentsChart({ balances, periodsPerYear, termYears, legend }:
             style={{ left: `${(marker.x / WIDTH) * 100}%`, top: `${(marker.y / HEIGHT) * 100}%` }}
           />
         ))}
+        {showEquity &&
+          equityMarkers.map((marker) => (
+            <span
+              key={marker.index}
+              className="chart__marker chart__marker--equity"
+              style={{ left: `${(marker.x / WIDTH) * 100}%`, top: `${(marker.y / HEIGHT) * 100}%` }}
+            />
+          ))}
         {hovered && (
           <div
             className="chart__tooltip"
             style={{ left: `${(hovered.x / WIDTH) * 100}%`, top: `${(hovered.y / HEIGHT) * 100}%` }}
           >
-            <strong>{formatCurrency(hovered.balance)}</strong>
+            <strong>{formatCurrency(hovered.value)}</strong>
+            {hoveredEquity && (
+              <strong className="chart__tooltip-equity">
+                {formatCurrency(hoveredEquity.value)} equity
+              </strong>
+            )}
             <span>{formatYear(hovered.index, periodsPerYear)}</span>
           </div>
         )}
@@ -104,6 +148,12 @@ export function RepaymentsChart({ balances, periodsPerYear, termYears, legend }:
         <span className="chart__legend-dot" />
         {legend}
       </p>
+      {showEquity && (
+        <p className="chart__legend">
+          <span className="chart__legend-dot chart__legend-dot--equity" />
+          Equity (assumes a constant home value)
+        </p>
+      )}
     </div>
   )
 }

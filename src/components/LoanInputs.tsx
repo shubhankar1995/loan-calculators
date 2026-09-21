@@ -7,10 +7,12 @@ interface Props {
   termYears: number
   ratePercent: number
   repaymentType: RepaymentType
+  homeValue: number
   onAmountChange: (value: number) => void
   onTermChange: (value: number) => void
   onRateChange: (value: number) => void
   onRepaymentTypeChange: (value: RepaymentType) => void
+  onHomeValueChange: (value: number) => void
 }
 
 export function LoanInputs({
@@ -18,13 +20,19 @@ export function LoanInputs({
   termYears,
   ratePercent,
   repaymentType,
+  homeValue,
   onAmountChange,
   onTermChange,
   onRateChange,
   onRepaymentTypeChange,
+  onHomeValueChange,
 }: Props) {
   const handleAmount = (event: ChangeEvent<HTMLInputElement>) => {
     onAmountChange(parseNumber(event.target.value))
+  }
+
+  const handleHomeValue = (event: ChangeEvent<HTMLInputElement>) => {
+    onHomeValueChange(parseNumber(event.target.value))
   }
 
   return (
@@ -37,6 +45,17 @@ export function LoanInputs({
           inputMode="numeric"
           value={`$${formatNumber(amount)}`}
           onChange={handleAmount}
+        />
+      </div>
+
+      <div className="field field--amount">
+        <label htmlFor="home-value">Home value (for equity)</label>
+        <input
+          id="home-value"
+          className="control"
+          inputMode="numeric"
+          value={`$${formatNumber(homeValue)}`}
+          onChange={handleHomeValue}
         />
       </div>
 
