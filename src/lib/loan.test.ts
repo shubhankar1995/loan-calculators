@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { PERIODS_PER_YEAR, calculateLoan, periodicRepayment } from './loan'
 
 const base = {
-  amount: 112800,
+  amount: 1128000,
   termYears: 30,
   annualRatePercent: 6.29,
   repaymentType: 'principal-and-interest',
@@ -12,7 +12,7 @@ const base = {
 
 describe('periodicRepayment', () => {
   it('matches the standard amortisation formula', () => {
-    expect(periodicRepayment(112800, 0.0629 / 12, 360)).toBeCloseTo(693.28, 1)
+    expect(periodicRepayment(1128000, 0.0629 / 12, 360)).toBeCloseTo(693.28, 1)
   })
 
   it('splits the principal evenly when the rate is zero', () => {
@@ -21,7 +21,7 @@ describe('periodicRepayment', () => {
 
   it('returns zero for a zero-length or zero-value loan', () => {
     expect(periodicRepayment(0, 0.005, 360)).toBe(0)
-    expect(periodicRepayment(112800, 0.005, 0)).toBe(0)
+    expect(periodicRepayment(1128000, 0.005, 0)).toBe(0)
   })
 })
 
@@ -46,7 +46,7 @@ describe('calculateLoan - principal and interest', () => {
 
   it('produces one table row per year, counting the term down', () => {
     expect(result.yearlyBalances).toHaveLength(31)
-    expect(result.yearlyBalances[0]).toMatchObject({ yearsRemaining: 30, balance: 112800 })
+    expect(result.yearlyBalances[0]).toMatchObject({ yearsRemaining: 30, balance: 1128000 })
     expect(result.yearlyBalances.at(-1)).toMatchObject({ yearsRemaining: 0, balance: 0 })
   })
 
@@ -59,7 +59,7 @@ describe('calculateLoan - principal and interest', () => {
 
   it('produces one table row per month, counting the term down', () => {
     expect(result.monthlyBalances).toHaveLength(361)
-    expect(result.monthlyBalances[0]).toMatchObject({ monthsRemaining: 360, balance: 112800 })
+    expect(result.monthlyBalances[0]).toMatchObject({ monthsRemaining: 360, balance: 1128000 })
     expect(result.monthlyBalances.at(-1)).toMatchObject({ monthsRemaining: 0, balance: 0 })
   })
 })
@@ -68,7 +68,7 @@ describe('calculateLoan - interest only for an initial period', () => {
   const result = calculateLoan({ ...base, repaymentType: 'interest-only-5' })
 
   it('charges interest on the full principal during the interest-only period', () => {
-    expect(result.scheduledRepayment).toBeCloseTo((112800 * 0.0629) / 12, 6)
+    expect(result.scheduledRepayment).toBeCloseTo((1128000 * 0.0629) / 12, 6)
   })
 
   it("doesn't reduce the balance during the interest-only period", () => {
@@ -79,7 +79,7 @@ describe('calculateLoan - interest only for an initial period', () => {
 
   it('switches to principal and interest for the remaining term', () => {
     expect(result.postInterestOnlyRepayment).toBeCloseTo(
-      periodicRepayment(112800, 0.0629 / 12, 25 * 12),
+      periodicRepayment(1128000, 0.0629 / 12, 25 * 12),
       6,
     )
     expect(result.periodsToRepay).toBe(360)
