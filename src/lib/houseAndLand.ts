@@ -138,6 +138,7 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
   ) => {
     const balances: number[] = [constructionMonths <= 0 ? totalAmount : landAmount]
     const payments: number[] = [0]
+    const interests: number[] = [0]
     const offsetBalances: number[] = [startingOffset]
     let offset = startingOffset
     let totalInterest = 0
@@ -155,6 +156,7 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
       monthsToRepay = month
       balances.push(balance)
       payments.push(interest)
+      interests.push(interest)
       offsetBalances.push(offset)
     }
 
@@ -171,10 +173,11 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
       monthsToRepay = constructionEndMonth + month
       balances.push(balance)
       payments.push(payment)
+      interests.push(interest)
       offsetBalances.push(offset)
     }
 
-    return { balances, payments, offsetBalances, totalInterest, totalRepayments, monthsToRepay }
+    return { balances, payments, interests, offsetBalances, totalInterest, totalRepayments, monthsToRepay }
   }
 
   const startingAccountBalance = sanitise(input.startingAccountBalance)
@@ -226,6 +229,7 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
     yearlyBalances: toYearlyBalances(
       withOffset.balances,
       withOffset.payments,
+      withOffset.interests,
       withOffset.offsetBalances,
       12,
       termYears,
@@ -233,6 +237,7 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
     monthlyBalances: toMonthlyBalances(
       withOffset.balances,
       withOffset.payments,
+      withOffset.interests,
       withOffset.offsetBalances,
       12,
       termYears,

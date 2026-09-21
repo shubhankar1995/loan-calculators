@@ -8,6 +8,8 @@ interface Row {
   year: number
   balance: number
   repayment: number
+  interest: number
+  principal: number
   offsetBalance: number
 }
 
@@ -34,6 +36,8 @@ export function RepaymentsTable({ caption, startDate, monthlyBalances }: Props) 
       year: date.getFullYear(),
       balance: row.balance,
       repayment: row.repayment,
+      interest: row.interest,
+      principal: row.principal,
       offsetBalance: row.offsetBalance,
     }
   })
@@ -78,6 +82,12 @@ export function RepaymentsTable({ caption, startDate, monthlyBalances }: Props) 
               Paid that month
             </th>
             <th scope="col" className="numeric">
+              Interest paid
+            </th>
+            <th scope="col" className="numeric">
+              Principal paid
+            </th>
+            <th scope="col" className="numeric">
               Principal remaining
             </th>
             {showOffset && (
@@ -92,6 +102,8 @@ export function RepaymentsTable({ caption, startDate, monthlyBalances }: Props) 
                 const isCollapsed = collapsedYears.has(group.year)
                 const summary = group.rows[group.rows.length - 1]
                 const totalRepayment = group.rows.reduce((sum, row) => sum + row.repayment, 0)
+                const totalInterest = group.rows.reduce((sum, row) => sum + row.interest, 0)
+                const totalPrincipal = group.rows.reduce((sum, row) => sum + row.principal, 0)
                 return (
                   <Fragment key={group.year}>
                     <tr
@@ -109,6 +121,8 @@ export function RepaymentsTable({ caption, startDate, monthlyBalances }: Props) 
                         {group.year}
                       </td>
                       <td className="numeric">{formatCurrency(totalRepayment)}</td>
+                      <td className="numeric">{formatCurrency(totalInterest)}</td>
+                      <td className="numeric">{formatCurrency(totalPrincipal)}</td>
                       <td className="numeric">{formatCurrency(summary.balance)}</td>
                       {showOffset && (
                         <td className="numeric">{formatCurrency(summary.offsetBalance)}</td>
@@ -147,6 +161,8 @@ function RepaymentRow({ number, row, showOffset, indent }: RepaymentRowProps) {
       <td>{number}</td>
       <td className={indent ? 'repayments-table__month-cell' : undefined}>{row.date}</td>
       <td className="numeric">{formatCurrency(row.repayment)}</td>
+      <td className="numeric">{formatCurrency(row.interest)}</td>
+      <td className="numeric">{formatCurrency(row.principal)}</td>
       <td className="numeric">{formatCurrency(row.balance)}</td>
       {showOffset && <td className="numeric">{formatCurrency(row.offsetBalance)}</td>}
     </tr>
