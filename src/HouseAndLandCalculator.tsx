@@ -24,8 +24,10 @@ export function HouseAndLandCalculator() {
   const [stages, setStages] = useState<ConstructionStage[]>(DEFAULT_CONSTRUCTION_STAGES)
   const [homeValue, setHomeValue] = useState(1281660)
   const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
-  const [offsetBalance, setOffsetBalance] = useState(0)
-  const [offsetMonthlyContribution, setOffsetMonthlyContribution] = useState(0)
+  const [startingAccountBalance, setStartingAccountBalance] = useState(0)
+  const [monthlyIncome, setMonthlyIncome] = useState(0)
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0)
+  const [constructionRent, setConstructionRent] = useState(0)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [view, setView] = useState<View>('graph')
 
@@ -42,8 +44,10 @@ export function HouseAndLandCalculator() {
         stages,
         homeValue,
         homeValueGrowthPercent,
-        offsetBalance,
-        offsetMonthlyContribution,
+        startingAccountBalance,
+        monthlyIncome,
+        monthlyExpenses,
+        constructionRent,
       }),
     [
       landAmount,
@@ -56,8 +60,10 @@ export function HouseAndLandCalculator() {
       stages,
       homeValue,
       homeValueGrowthPercent,
-      offsetBalance,
-      offsetMonthlyContribution,
+      startingAccountBalance,
+      monthlyIncome,
+      monthlyExpenses,
+      constructionRent,
     ],
   )
 
@@ -90,8 +96,10 @@ export function HouseAndLandCalculator() {
             stages={stages}
             homeValue={homeValue}
             homeValueGrowthPercent={homeValueGrowthPercent}
-            offsetBalance={offsetBalance}
-            offsetMonthlyContribution={offsetMonthlyContribution}
+            startingAccountBalance={startingAccountBalance}
+            monthlyIncome={monthlyIncome}
+            monthlyExpenses={monthlyExpenses}
+            constructionRent={constructionRent}
             advancedOpen={advancedOpen}
             onLandAmountChange={setLandAmount}
             onConstructionAmountChange={setConstructionAmount}
@@ -104,8 +112,10 @@ export function HouseAndLandCalculator() {
             onStagesChange={setStages}
             onHomeValueChange={setHomeValue}
             onHomeValueGrowthChange={setHomeValueGrowthPercent}
-            onOffsetBalanceChange={setOffsetBalance}
-            onOffsetMonthlyContributionChange={setOffsetMonthlyContribution}
+            onStartingAccountBalanceChange={setStartingAccountBalance}
+            onMonthlyIncomeChange={setMonthlyIncome}
+            onMonthlyExpensesChange={setMonthlyExpenses}
+            onConstructionRentChange={setConstructionRent}
             onAdvancedOpenChange={setAdvancedOpen}
           />
         </section>
@@ -142,7 +152,7 @@ export function HouseAndLandCalculator() {
           </div>
 
           <div className="summary__callouts">
-            {(offsetBalance > 0 || offsetMonthlyContribution > 0) && result.offsetMonthsSaved > 0 && (
+            {result.offsetMonthsSaved > 0 && (
               <p className="callout">
                 Your offset account clears the loan{' '}
                 {describeDuration(result.offsetMonthsSaved, PERIODS_PER_YEAR.monthly)} sooner and

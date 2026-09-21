@@ -14,8 +14,10 @@ interface Props {
   stages: ConstructionStage[]
   homeValue: number
   homeValueGrowthPercent: number
-  offsetBalance: number
-  offsetMonthlyContribution: number
+  startingAccountBalance: number
+  monthlyIncome: number
+  monthlyExpenses: number
+  constructionRent: number
   advancedOpen: boolean
   onLandAmountChange: (value: number) => void
   onConstructionAmountChange: (value: number) => void
@@ -28,8 +30,10 @@ interface Props {
   onStagesChange: (stages: ConstructionStage[]) => void
   onHomeValueChange: (value: number) => void
   onHomeValueGrowthChange: (value: number) => void
-  onOffsetBalanceChange: (value: number) => void
-  onOffsetMonthlyContributionChange: (value: number) => void
+  onStartingAccountBalanceChange: (value: number) => void
+  onMonthlyIncomeChange: (value: number) => void
+  onMonthlyExpensesChange: (value: number) => void
+  onConstructionRentChange: (value: number) => void
   onAdvancedOpenChange: (open: boolean) => void
 }
 
@@ -45,8 +49,10 @@ export function HouseAndLandInputs({
   stages,
   homeValue,
   homeValueGrowthPercent,
-  offsetBalance,
-  offsetMonthlyContribution,
+  startingAccountBalance,
+  monthlyIncome,
+  monthlyExpenses,
+  constructionRent,
   advancedOpen,
   onLandAmountChange,
   onConstructionAmountChange,
@@ -59,8 +65,10 @@ export function HouseAndLandInputs({
   onStagesChange,
   onHomeValueChange,
   onHomeValueGrowthChange,
-  onOffsetBalanceChange,
-  onOffsetMonthlyContributionChange,
+  onStartingAccountBalanceChange,
+  onMonthlyIncomeChange,
+  onMonthlyExpensesChange,
+  onConstructionRentChange,
   onAdvancedOpenChange,
 }: Props) {
   const [offsetOpen, setOffsetOpen] = useState(false)
@@ -85,12 +93,20 @@ export function HouseAndLandInputs({
     onHomeValueChange(parseNumber(event.target.value))
   }
 
-  const handleOffsetBalance = (event: ChangeEvent<HTMLInputElement>) => {
-    onOffsetBalanceChange(parseNumber(event.target.value))
+  const handleStartingAccountBalance = (event: ChangeEvent<HTMLInputElement>) => {
+    onStartingAccountBalanceChange(parseNumber(event.target.value))
   }
 
-  const handleOffsetMonthlyContribution = (event: ChangeEvent<HTMLInputElement>) => {
-    onOffsetMonthlyContributionChange(parseNumber(event.target.value))
+  const handleMonthlyIncome = (event: ChangeEvent<HTMLInputElement>) => {
+    onMonthlyIncomeChange(parseNumber(event.target.value))
+  }
+
+  const handleMonthlyExpenses = (event: ChangeEvent<HTMLInputElement>) => {
+    onMonthlyExpensesChange(parseNumber(event.target.value))
+  }
+
+  const handleConstructionRent = (event: ChangeEvent<HTMLInputElement>) => {
+    onConstructionRentChange(parseNumber(event.target.value))
   }
 
   const handleStagePercent = (index: number, value: number) => {
@@ -287,34 +303,62 @@ export function HouseAndLandInputs({
         <summary>Offset account</summary>
         <div className="form-grid">
           <div className="field">
-            <label htmlFor="offset-balance">Offset account balance</label>
+            <label htmlFor="starting-account-balance">Starting account balance</label>
             <div className="control control--unit">
               <span className="control__prefix">$</span>
               <input
-                id="offset-balance"
+                id="starting-account-balance"
                 inputMode="numeric"
-                value={formatNumber(offsetBalance)}
-                onChange={handleOffsetBalance}
+                value={formatNumber(startingAccountBalance)}
+                onChange={handleStartingAccountBalance}
               />
             </div>
           </div>
 
           <div className="field">
-            <label htmlFor="offset-monthly-contribution">Added to offset</label>
+            <label htmlFor="monthly-income">Monthly household income</label>
             <div className="control control--unit">
               <span className="control__prefix">$</span>
               <input
-                id="offset-monthly-contribution"
+                id="monthly-income"
                 inputMode="numeric"
-                value={formatNumber(offsetMonthlyContribution)}
-                onChange={handleOffsetMonthlyContribution}
+                value={formatNumber(monthlyIncome)}
+                onChange={handleMonthlyIncome}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="monthly-expenses">Monthly expenses</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="monthly-expenses"
+                inputMode="numeric"
+                value={formatNumber(monthlyExpenses)}
+                onChange={handleMonthlyExpenses}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="construction-rent">Rent during construction</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="construction-rent"
+                inputMode="numeric"
+                value={formatNumber(constructionRent)}
+                onChange={handleConstructionRent}
               />
               <span className="control__suffix">per month</span>
             </div>
           </div>
         </div>
         <p className="form-hint">
-          Reduces the interest-bearing balance from day one, including during construction.
+          Whatever's left of your income after expenses (and rent while the build is underway) is
+          swept into the offset account automatically, reducing the interest-bearing balance from
+          day one. Rent is assumed to stop once construction finishes and you move in.
         </p>
       </details>
     </div>

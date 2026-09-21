@@ -13,8 +13,10 @@ const base = {
   stages: DEFAULT_CONSTRUCTION_STAGES,
   homeValue: 0,
   homeValueGrowthPercent: 0,
-  offsetBalance: 0,
-  offsetMonthlyContribution: 0,
+  startingAccountBalance: 0,
+  monthlyIncome: 0,
+  monthlyExpenses: 0,
+  constructionRent: 0,
 } as const
 
 describe('calculateHouseAndLand - construction phase', () => {
@@ -198,8 +200,9 @@ describe('calculateHouseAndLand - offset account', () => {
   it('reduces interest charged and shortens the term', () => {
     const result = calculateHouseAndLand({
       ...base,
-      offsetBalance: 100000,
-      offsetMonthlyContribution: 500,
+      startingAccountBalance: 100000,
+      monthlyIncome: 8000,
+      monthlyExpenses: 7500,
     })
     const noOffset = calculateHouseAndLand(base)
     expect(result.totalInterest).toBeLessThan(noOffset.totalInterest)
@@ -208,21 +211,46 @@ describe('calculateHouseAndLand - offset account', () => {
   })
 
   it('still repays exactly the amount borrowed', () => {
-    const result = calculateHouseAndLand({ ...base, offsetBalance: 100000 })
+    const result = calculateHouseAndLand({ ...base, startingAccountBalance: 100000 })
     const totalAmount = base.landAmount + base.constructionAmount
     expect(Math.round(result.totalRepayments - result.totalInterest)).toBe(Math.round(totalAmount))
   })
 
   it('reduces interest during construction too, since it is interest-only on the drawn balance', () => {
-    const withOffset = calculateHouseAndLand({ ...base, offsetBalance: base.landAmount })
+    const withOffset = calculateHouseAndLand({ ...base, startingAccountBalance: base.landAmount })
     const noOffset = calculateHouseAndLand(base)
     expect(withOffset.balances[0]).toBe(noOffset.balances[0])
     expect(withOffset.monthlyBalances[1].repayment).toBeLessThan(noOffset.monthlyBalances[1].repayment)
   })
 
   it('does not charge negative interest once the offset exceeds the balance', () => {
-    const result = calculateHouseAndLand({ ...base, offsetBalance: base.landAmount + base.constructionAmount + 100000 })
+    const result = calculateHouseAndLand({
+      ...base,
+      startingAccountBalance: base.landAmount + base.constructionAmount + 100000,
+    })
     expect(result.totalInterest).toBe(0)
+  })
+
+  it('sweeps leftover income into the offset, reduced by rent while the build is ongoing', () => {
+    const result = calculateHouseAndLand({
+      ...base,
+      monthlyIncome: 8000,
+      monthlyExpenses: 5000,
+      constructionRent: 2000,
+    })
+    expect(result.offsetContributionDuringConstruction).toBeCloseTo(1000, 6)
+    expect(result.offsetContributionAfterConstruction).toBeCloseTo(3000, 6)
+  })
+
+  it('never contributes a negative amount when expenses and rent outweigh income', () => {
+    const result = calculateHouseAndLand({
+      ...base,
+      monthlyIncome: 3000,
+      monthlyExpenses: 2500,
+      constructionRent: 2000,
+    })
+    expect(result.offsetContributionDuringConstruction).toBe(0)
+    expect(result.offsetContributionAfterConstruction).toBeGreaterThan(0)
   })
 })
 

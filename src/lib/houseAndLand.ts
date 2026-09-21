@@ -43,9 +43,13 @@ export interface HouseAndLandInput {
   /** Assumed annual growth in home value, compounded, applied once construction completes. */
   homeValueGrowthPercent: number
   /** Starting balance of a linked offset account, reduces the interest-bearing balance. */
-  offsetBalance: number
-  /** Amount added to the offset account every month. */
-  offsetMonthlyContribution: number
+  startingAccountBalance: number
+  /** Monthly household income, used to work out how much is left over to sweep into the offset account. */
+  monthlyIncome: number
+  /** Monthly household expenses, excluding rent and loan repayments. */
+  monthlyExpenses: number
+  /** Rent paid while the build is ongoing; assumed to stop once construction completes and you move in. */
+  constructionRent: number
 }
 
 export interface HouseAndLandResult {
@@ -63,6 +67,10 @@ export interface HouseAndLandResult {
   offsetMonthsSaved: number
   /** Interest saved thanks to the offset account. */
   offsetInterestSaved: number
+  /** Leftover income swept into the offset account each month while paying rent during the build. */
+  offsetContributionDuringConstruction: number
+  /** Leftover income swept into the offset account each month once you move in and rent stops. */
+  offsetContributionAfterConstruction: number
   /** Balance at the end of every month, index 0 being the opening balance. */
   balances: number[]
   /**
@@ -123,7 +131,11 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
    * Runs the full construction-then-amortisation schedule for a given offset account, so the
    * effect of the offset can be measured against a baseline with no offset.
    */
-  const simulate = (startingOffset: number, contributionPerMonth: number) => {
+  const simulate = (
+    startingOffset: number,
+    constructionContributionPerMonth: number,
+    postConstructionContributionPerMonth: number,
+  ) => {
     const balances: number[] = [constructionMonths <= 0 ? totalAmount : landAmount]
     const payments: number[] = [0]
     const offsetBalances: number[] = [startingOffset]
@@ -137,7 +149,7 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
       const interestBearingBalance = Math.max(priorBalance - offset, 0)
       const interest = interestBearingBalance * monthlyRate
       const balance = landAmount + drawnByMonth(month)
-      offset += contributionPerMonth
+      offset += constructionContributionPerMonth
       totalInterest += interest
       totalRepayments += interest
       monthsToRepay = month
@@ -153,7 +165,7 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
       const payment = Math.min(postConstructionRepayment, balance + interest)
       balance = balance + interest - payment
       if (balance < 1e-6) balance = 0
-      offset += contributionPerMonth
+      offset += postConstructionContributionPerMonth
       totalInterest += interest
       totalRepayments += payment
       monthsToRepay = constructionEndMonth + month
@@ -165,11 +177,27 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
     return { balances, payments, offsetBalances, totalInterest, totalRepayments, monthsToRepay }
   }
 
-  const offsetBalance = sanitise(input.offsetBalance)
-  const offsetMonthlyContribution = sanitise(input.offsetMonthlyContribution)
-  const withOffset = simulate(offsetBalance, offsetMonthlyContribution)
+  const startingAccountBalance = sanitise(input.startingAccountBalance)
+  const monthlyIncome = sanitise(input.monthlyIncome)
+  const monthlyExpenses = sanitise(input.monthlyExpenses)
+  const constructionRent = sanitise(input.constructionRent)
+  /** Whatever's left of income after expenses (and rent, while renting during the build) is swept into the offset. */
+  const offsetContributionDuringConstruction = Math.max(
+    monthlyIncome - monthlyExpenses - constructionRent,
+    0,
+  )
+  const offsetContributionAfterConstruction = Math.max(monthlyIncome - monthlyExpenses, 0)
+  const withOffset = simulate(
+    startingAccountBalance,
+    offsetContributionDuringConstruction,
+    offsetContributionAfterConstruction,
+  )
   const noOffset =
-    offsetBalance > 0 || offsetMonthlyContribution > 0 ? simulate(0, 0) : withOffset
+    startingAccountBalance > 0 ||
+    offsetContributionDuringConstruction > 0 ||
+    offsetContributionAfterConstruction > 0
+      ? simulate(0, 0, 0)
+      : withOffset
 
   const homeValue = Number.isFinite(input.homeValue) && input.homeValue > 0 ? input.homeValue : 0
   const propertyValueAtMonth = (month: number): number => {
@@ -191,6 +219,8 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
     totalInterest: withOffset.totalInterest,
     offsetMonthsSaved: noOffset.monthsToRepay - withOffset.monthsToRepay,
     offsetInterestSaved: noOffset.totalInterest - withOffset.totalInterest,
+    offsetContributionDuringConstruction,
+    offsetContributionAfterConstruction,
     balances: withOffset.balances,
     propertyValues,
     yearlyBalances: toYearlyBalances(
