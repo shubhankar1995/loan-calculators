@@ -12,9 +12,9 @@ export default function App() {
       <main className="calculator">
         <div className="site-header">
           <div className="brand">
-            <FlaskMark />
+            <CurveMark />
             <span className="brand__name">
-              Loan<span className="brand__name-accent">Lab</span>
+              Repay<span className="brand__name-accent">ly</span>
             </span>
             <span className="brand__tagline">Repayments, modelled properly</span>
           </div>
@@ -41,7 +41,7 @@ export default function App() {
   )
 }
 
-function FlaskMark() {
+function CurveMark() {
   return (
     <svg
       className="brand__mark"
@@ -50,17 +50,22 @@ function FlaskMark() {
       focusable="false"
     >
       <rect width="32" height="32" rx="7" fill="currentColor" />
-      <g
+      <path
+        d="M6 25h20"
         fill="none"
         stroke="#ffffff"
-        strokeWidth="2.1"
+        strokeOpacity="0.45"
+        strokeWidth="2"
         strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M13 6v7.6L7.7 23.1A2.2 2.2 0 0 0 9.6 26.4h12.8a2.2 2.2 0 0 0 1.9-3.3L19 13.6V6" />
-        <path d="M11.2 18.4h9.6" />
-        <path d="M11.5 5.6h9" />
-      </g>
+      />
+      <path
+        d="M7 7.5C14 10.5 18 15 20.5 21"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+      />
+      <circle cx="21.5" cy="23.2" r="3.1" fill="#ffffff" />
     </svg>
   )
 }

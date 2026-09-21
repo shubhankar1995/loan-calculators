@@ -1,4 +1,4 @@
-# LoanLab
+# Repayly
 
 Repayments, modelled properly.
 
