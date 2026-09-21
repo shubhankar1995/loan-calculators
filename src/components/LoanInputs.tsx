@@ -1,0 +1,91 @@
+import { type ChangeEvent } from 'react'
+import type { RepaymentType } from '../lib/loan'
+import { formatNumber, parseNumber } from '../lib/format'
+
+interface Props {
+  amount: number
+  termYears: number
+  ratePercent: number
+  repaymentType: RepaymentType
+  onAmountChange: (value: number) => void
+  onTermChange: (value: number) => void
+  onRateChange: (value: number) => void
+  onRepaymentTypeChange: (value: RepaymentType) => void
+}
+
+export function LoanInputs({
+  amount,
+  termYears,
+  ratePercent,
+  repaymentType,
+  onAmountChange,
+  onTermChange,
+  onRateChange,
+  onRepaymentTypeChange,
+}: Props) {
+  const handleAmount = (event: ChangeEvent<HTMLInputElement>) => {
+    onAmountChange(parseNumber(event.target.value))
+  }
+
+  return (
+    <div className="input-bar">
+      <div className="field field--amount">
+        <label htmlFor="loan-amount">Loan Amount</label>
+        <input
+          id="loan-amount"
+          className="control"
+          inputMode="numeric"
+          value={`$${formatNumber(amount)}`}
+          onChange={handleAmount}
+        />
+      </div>
+
+      <div className="field field--term">
+        <label htmlFor="loan-term">Term</label>
+        <div className="field-row">
+          <input
+            id="loan-term"
+            className="control control--narrow"
+            inputMode="numeric"
+            value={termYears}
+            onChange={(event) => onTermChange(parseNumber(event.target.value))}
+          />
+          <span className="suffix">years</span>
+        </div>
+      </div>
+
+      <div className="field field--type">
+        <label htmlFor="repayment-type">Repayment type</label>
+        <div className="select-wrap">
+          <select
+            id="repayment-type"
+            className="control"
+            value={repaymentType}
+            onChange={(event) => onRepaymentTypeChange(event.target.value as RepaymentType)}
+          >
+            <option value="principal-and-interest">Principal and interest</option>
+            <option value="interest-only">Interest only</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="field field--rate">
+        <label htmlFor="interest-rate">With an interest rate of</label>
+        <div className="field-row">
+          <input
+            id="interest-rate"
+            className="control control--narrow"
+            inputMode="decimal"
+            value={ratePercent}
+            onChange={(event) => onRateChange(parseNumber(event.target.value))}
+          />
+          <span className="suffix">% p.a.</span>
+          <span className="suffix suffix--muted">Or</span>
+          <a className="link" href="#rates">
+            choose a home loan
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
