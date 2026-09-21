@@ -14,6 +14,7 @@ type View = 'graph' | 'table'
 export function HouseAndLandCalculator() {
   const [landAmount, setLandAmount] = useState(780000)
   const [constructionAmount, setConstructionAmount] = useState(501660)
+  const [depositAmount, setDepositAmount] = useState(0)
   const [startDate, setStartDate] = useState(() => todayISODate())
   const [termYears, setTermYears] = useState(30)
   const [ratePercent, setRatePercent] = useState(6.29)
@@ -29,12 +30,13 @@ export function HouseAndLandCalculator() {
       calculateHouseAndLand({
         landAmount,
         constructionAmount,
+        depositAmount,
         termYears,
         annualRatePercent: ratePercent,
         constructionMonths,
         stages,
       }),
-    [landAmount, constructionAmount, termYears, ratePercent, constructionMonths, stages],
+    [landAmount, constructionAmount, depositAmount, termYears, ratePercent, constructionMonths, stages],
   )
 
   const caption = `Interest rate ${ratePercent}% p.a., interest only for the ${constructionMonths} month build, then principal and interest of ${formatRepayment(
@@ -53,6 +55,7 @@ export function HouseAndLandCalculator() {
           <HouseAndLandInputs
             landAmount={landAmount}
             constructionAmount={constructionAmount}
+            depositAmount={depositAmount}
             startDate={startDate}
             termYears={termYears}
             ratePercent={ratePercent}
@@ -63,6 +66,7 @@ export function HouseAndLandCalculator() {
             advancedOpen={advancedOpen}
             onLandAmountChange={setLandAmount}
             onConstructionAmountChange={setConstructionAmount}
+            onDepositAmountChange={setDepositAmount}
             onStartDateChange={setStartDate}
             onTermChange={setTermYears}
             onRateChange={setRatePercent}

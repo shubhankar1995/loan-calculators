@@ -27,6 +27,8 @@ export interface HouseAndLandInput {
   landAmount: number
   /** Cost of the build, drawn down progressively as each stage completes. */
   constructionAmount: number
+  /** Cash paid upfront, reducing the amount borrowed — applied to the land price first, then construction. */
+  depositAmount: number
   /** Loan term in years, counted from the start date (land settlement). */
   termYears: number
   annualRatePercent: number
@@ -59,8 +61,13 @@ export interface HouseAndLandResult {
  * for the rest of the term.
  */
 export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandResult {
-  const landAmount = sanitise(input.landAmount)
-  const constructionAmount = sanitise(input.constructionAmount)
+  const landPrice = sanitise(input.landAmount)
+  const constructionPrice = sanitise(input.constructionAmount)
+  const totalPrice = landPrice + constructionPrice
+  const deposit = Math.min(Math.max(input.depositAmount, 0) || 0, totalPrice)
+  const depositOnLand = Math.min(deposit, landPrice)
+  const landAmount = landPrice - depositOnLand
+  const constructionAmount = constructionPrice - (deposit - depositOnLand)
   const termYears = sanitise(input.termYears)
   const annualRate = Number.isFinite(input.annualRatePercent)
     ? Math.max(input.annualRatePercent, 0) / 100

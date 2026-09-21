@@ -5,6 +5,7 @@ import { formatNumber, parseNumber } from '../lib/format'
 interface Props {
   landAmount: number
   constructionAmount: number
+  depositAmount: number
   startDate: string
   termYears: number
   ratePercent: number
@@ -15,6 +16,7 @@ interface Props {
   advancedOpen: boolean
   onLandAmountChange: (value: number) => void
   onConstructionAmountChange: (value: number) => void
+  onDepositAmountChange: (value: number) => void
   onStartDateChange: (value: string) => void
   onTermChange: (value: number) => void
   onRateChange: (value: number) => void
@@ -28,6 +30,7 @@ interface Props {
 export function HouseAndLandInputs({
   landAmount,
   constructionAmount,
+  depositAmount,
   startDate,
   termYears,
   ratePercent,
@@ -38,6 +41,7 @@ export function HouseAndLandInputs({
   advancedOpen,
   onLandAmountChange,
   onConstructionAmountChange,
+  onDepositAmountChange,
   onStartDateChange,
   onTermChange,
   onRateChange,
@@ -55,6 +59,10 @@ export function HouseAndLandInputs({
     onConstructionAmountChange(parseNumber(event.target.value))
   }
 
+  const handleDepositAmount = (event: ChangeEvent<HTMLInputElement>) => {
+    onDepositAmountChange(parseNumber(event.target.value))
+  }
+
   const handleHomeValue = (event: ChangeEvent<HTMLInputElement>) => {
     onHomeValueChange(parseNumber(event.target.value))
   }
@@ -70,7 +78,7 @@ export function HouseAndLandInputs({
       <div className="form-section">
         <h3 className="form-section__title">Land</h3>
         <div className="form-grid">
-          <div className="field field--full">
+          <div className="field">
             <label htmlFor="land-amount">Land price</label>
             <div className="control control--unit">
               <span className="control__prefix">$</span>
@@ -79,6 +87,19 @@ export function HouseAndLandInputs({
                 inputMode="numeric"
                 value={formatNumber(landAmount)}
                 onChange={handleLandAmount}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="deposit-amount">Deposit paid</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="deposit-amount"
+                inputMode="numeric"
+                value={formatNumber(depositAmount)}
+                onChange={handleDepositAmount}
               />
             </div>
           </div>
@@ -134,6 +155,10 @@ export function HouseAndLandInputs({
             </div>
           </div>
         </div>
+        <p className="form-hint">
+          The deposit reduces the amount borrowed — applied to the land price first, then any
+          leftover to the construction price.
+        </p>
       </div>
 
       <div className="form-section">

@@ -5,6 +5,7 @@ import { periodicRepayment } from './loan'
 const base = {
   landAmount: 400000,
   constructionAmount: 350000,
+  depositAmount: 0,
   termYears: 30,
   annualRatePercent: 6,
   constructionMonths: 10,
@@ -92,6 +93,32 @@ describe('calculateHouseAndLand - custom stage split', () => {
       base.landAmount + base.constructionAmount,
       6,
     )
+  })
+})
+
+describe('calculateHouseAndLand - deposit', () => {
+  it('reduces the land drawdown first when the deposit is smaller than the land price', () => {
+    const result = calculateHouseAndLand({ ...base, depositAmount: 100000 })
+    expect(result.balances[0]).toBe(base.landAmount - 100000)
+    expect(result.balances[base.constructionMonths]).toBeCloseTo(
+      base.landAmount + base.constructionAmount - 100000,
+      6,
+    )
+  })
+
+  it('spills over onto the construction drawdown once it exceeds the land price', () => {
+    const result = calculateHouseAndLand({ ...base, depositAmount: 450000 })
+    expect(result.balances[0]).toBe(0)
+    expect(result.balances[base.constructionMonths]).toBeCloseTo(
+      base.landAmount + base.constructionAmount - 450000,
+      6,
+    )
+  })
+
+  it('never borrows less than zero, even when the deposit covers the whole price', () => {
+    const result = calculateHouseAndLand({ ...base, depositAmount: 10000000 })
+    expect(result.totalAmount).toBe(0)
+    expect(result.totalInterest).toBe(0)
   })
 })
 
