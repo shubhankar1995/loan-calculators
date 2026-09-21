@@ -31,6 +31,7 @@ export function RepaymentsTable({
           remaining: row.yearsRemaining,
           balance: row.balance,
           repayment: row.repayment,
+          offsetBalance: row.offsetBalance,
           projectedHomeValue: projectedHomeValue(homeValue, homeValueGrowthPercent, row.yearsElapsed),
         }))
       : monthlyBalances.map((row) => ({
@@ -38,6 +39,7 @@ export function RepaymentsTable({
           remaining: row.monthsRemaining,
           balance: row.balance,
           repayment: row.repayment,
+          offsetBalance: row.offsetBalance,
           projectedHomeValue: projectedHomeValue(
             homeValue,
             homeValueGrowthPercent,
@@ -45,23 +47,28 @@ export function RepaymentsTable({
           ),
         }))
 
+  const showOffset = rows.some((row) => row.offsetBalance > 0)
+
   return (
-    <div className="panel">
-      <div className="panel__header">{caption}</div>
-      <div className="panel__toggle">
-        <GranularityButton
-          active={granularity === 'yearly'}
-          onClick={() => setGranularity('yearly')}
-        >
-          Yearly
-        </GranularityButton>
-        <GranularityButton
-          active={granularity === 'monthly'}
-          onClick={() => setGranularity('monthly')}
-        >
-          Monthly
-        </GranularityButton>
+    <div>
+      <div className="chart__header">
+        <p className="chart__title">{caption}</p>
+        <div className="tabs" role="tablist">
+          <GranularityButton
+            active={granularity === 'yearly'}
+            onClick={() => setGranularity('yearly')}
+          >
+            Yearly
+          </GranularityButton>
+          <GranularityButton
+            active={granularity === 'monthly'}
+            onClick={() => setGranularity('monthly')}
+          >
+            Monthly
+          </GranularityButton>
+        </div>
       </div>
+      <div className="table-wrap">
       <table className="repayments-table">
         <thead>
           <tr>
@@ -72,6 +79,11 @@ export function RepaymentsTable({
             <th scope="col" className="numeric">
               Principal remaining
             </th>
+            {showOffset && (
+              <th scope="col" className="numeric">
+                Offset balance
+              </th>
+            )}
             {showEquity && (
               <th scope="col" className="numeric">
                 Est. home value
@@ -90,6 +102,9 @@ export function RepaymentsTable({
               <td>{row.remaining}</td>
               <td className="numeric">{formatCurrency(row.repayment)}</td>
               <td className="numeric">{formatCurrency(row.balance)}</td>
+              {showOffset && (
+                <td className="numeric">{formatCurrency(row.offsetBalance)}</td>
+              )}
               {showEquity && (
                 <td className="numeric">{formatCurrency(row.projectedHomeValue)}</td>
               )}
@@ -105,6 +120,7 @@ export function RepaymentsTable({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }
@@ -119,9 +135,10 @@ function GranularityButton({ active, onClick, children }: GranularityButtonProps
   return (
     <button
       type="button"
-      className={`panel__toggle-button${active ? ' is-active' : ''}`}
+      role="tab"
+      className={`tabs__button${active ? ' is-active' : ''}`}
       onClick={onClick}
-      aria-pressed={active}
+      aria-selected={active}
     >
       {children}
     </button>

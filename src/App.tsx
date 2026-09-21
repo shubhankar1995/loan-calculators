@@ -4,22 +4,15 @@ import { RepaymentsChart } from './components/RepaymentsChart'
 import { RepaymentsTable } from './components/RepaymentsTable'
 import {
   FREQUENCY_ADVERBS,
-  FREQUENCY_LABELS,
   PERIODS_PER_YEAR,
   calculateLoan,
   interestOnlyYears,
   type Frequency,
   type RepaymentType,
 } from './lib/loan'
-import {
-  describeDuration,
-  formatCurrency,
-  formatNumber,
-  formatRepayment,
-  parseNumber,
-} from './lib/format'
+import { describeDuration, formatCurrency, formatRepayment } from './lib/format'
 
-type View = 'table' | 'graph'
+type View = 'graph' | 'table'
 
 export default function App() {
   const [amount, setAmount] = useState(1128000)
@@ -32,6 +25,7 @@ export default function App() {
   const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
   const [offsetBalance, setOffsetBalance] = useState(0)
   const [offsetMonthlyContribution, setOffsetMonthlyContribution] = useState(0)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [view, setView] = useState<View>('graph')
 
   const result = useMemo(
@@ -61,9 +55,6 @@ export default function App() {
   const periodsPerYear = PERIODS_PER_YEAR[frequency]
   const ioYears = interestOnlyYears(repaymentType)
   const interestOnly = ioYears > 0
-  const repaymentLabel = interestOnly
-    ? 'Interest only repayments'
-    : 'Principal and interest repayments'
   const caption = `Interest rate ${ratePercent}% with ${FREQUENCY_ADVERBS[frequency]} ${
     interestOnly ? 'interest only' : 'principal and interest'
   } repayments of ${formatRepayment(result.totalPeriodRepayment)}`
@@ -71,173 +62,166 @@ export default function App() {
   return (
     <div className="page">
       <main className="calculator">
-        <h1 className="visually-hidden">Loan repayment calculator</h1>
+        <header className="page-header">
+          <h1>Home loan calculator</h1>
+          <p>Adjust the details to see your estimated repayments.</p>
+        </header>
 
-        <LoanInputs
-          amount={amount}
-          termYears={termYears}
-          ratePercent={ratePercent}
-          repaymentType={repaymentType}
-          homeValue={homeValue}
-          homeValueGrowthPercent={homeValueGrowthPercent}
-          offsetBalance={offsetBalance}
-          offsetMonthlyContribution={offsetMonthlyContribution}
-          onAmountChange={setAmount}
-          onTermChange={setTermYears}
-          onRateChange={setRatePercent}
-          onRepaymentTypeChange={setRepaymentType}
-          onHomeValueChange={setHomeValue}
-          onHomeValueGrowthChange={setHomeValueGrowthPercent}
-          onOffsetBalanceChange={setOffsetBalance}
-          onOffsetMonthlyContributionChange={setOffsetMonthlyContribution}
-        />
+        <div className="layout">
+          <section className="card card--form" aria-label="Loan details">
+            <LoanInputs
+              amount={amount}
+              termYears={termYears}
+              ratePercent={ratePercent}
+              repaymentType={repaymentType}
+              frequency={frequency}
+              extraRepayment={extraRepayment}
+              homeValue={homeValue}
+              homeValueGrowthPercent={homeValueGrowthPercent}
+              offsetBalance={offsetBalance}
+              offsetMonthlyContribution={offsetMonthlyContribution}
+              advancedOpen={advancedOpen}
+              onAmountChange={setAmount}
+              onTermChange={setTermYears}
+              onRateChange={setRatePercent}
+              onRepaymentTypeChange={setRepaymentType}
+              onFrequencyChange={setFrequency}
+              onExtraRepaymentChange={setExtraRepayment}
+              onHomeValueChange={setHomeValue}
+              onHomeValueGrowthChange={setHomeValueGrowthPercent}
+              onOffsetBalanceChange={setOffsetBalance}
+              onOffsetMonthlyContributionChange={setOffsetMonthlyContribution}
+              onAdvancedOpenChange={setAdvancedOpen}
+            />
+          </section>
 
-        <h2 className="section-title">Your {FREQUENCY_ADVERBS[frequency]} repayments</h2>
-
-        <div className="stats">
-          <div className="stat stat--hero">
-            <p className="stat__label">{repaymentLabel}</p>
-            <p className="stat__value">{formatRepayment(result.totalPeriodRepayment)}</p>
-          </div>
-          <div className="stat stat--hero">
-            <p className="stat__label">Interest rate</p>
-            <p className="stat__value">
-              {ratePercent}
-              <span className="stat__unit">% p.a</span>
-            </p>
-          </div>
-
-          <div className="stat">
-            <p className="stat__label">Total loan repayments</p>
-            <p className="stat__amount">{formatCurrency(result.totalRepayments)}</p>
-          </div>
-          <div className="stat">
-            <p className="stat__label">Total interest charged</p>
-            <p className="stat__amount">{formatCurrency(result.totalInterest)}</p>
-          </div>
-          {result.postInterestOnlyRepayment !== undefined && (
-            <div className="stat">
-              <p className="stat__label">
-                Repayments after interest only period ({FREQUENCY_ADVERBS[frequency]})
+          <aside className="card card--summary" aria-label="Your repayment">
+            <div className="summary__hero">
+              <p className="summary__hero-label">Your repayment</p>
+              <p className="summary__hero-value">
+                {formatRepayment(result.totalPeriodRepayment)}
+                <span className="summary__hero-unit">/ {FREQUENCY_ADVERBS[frequency]}</span>
               </p>
-              <p className="stat__amount">{formatRepayment(result.postInterestOnlyRepayment)}</p>
+              <p className="summary__rate">
+                <strong>{ratePercent}%</strong> p.a., {termYears} year term
+              </p>
             </div>
+
+            <div className="summary__tiles">
+              <div className="tile">
+                <p className="tile__label">Total repayments</p>
+                <p className="tile__value">{formatCurrency(result.totalRepayments)}</p>
+              </div>
+              <div className="tile">
+                <p className="tile__label">Total interest charged</p>
+                <p className="tile__value">{formatCurrency(result.totalInterest)}</p>
+              </div>
+              {result.postInterestOnlyRepayment !== undefined && (
+                <div className="tile tile--full">
+                  <p className="tile__label">
+                    Repayments after interest only period ({FREQUENCY_ADVERBS[frequency]})
+                  </p>
+                  <p className="tile__value">{formatRepayment(result.postInterestOnlyRepayment)}</p>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="summary__cta"
+              onClick={() => setAdvancedOpen(true)}
+            >
+              + Add extra repayments
+            </button>
+
+            {(extraRepayment > 0 || offsetBalance > 0 || offsetMonthlyContribution > 0 || interestOnly) && (
+              <div className="summary__callouts">
+                {extraRepayment > 0 && result.periodsSaved > 0 && (
+                  <p className="callout">
+                    Paying an extra {formatCurrency(extraRepayment)} {FREQUENCY_ADVERBS[frequency]}{' '}
+                    clears the loan {describeDuration(result.periodsSaved, periodsPerYear)} sooner
+                    and saves {formatCurrency(result.interestSaved)} in interest.
+                  </p>
+                )}
+
+                {(offsetBalance > 0 || offsetMonthlyContribution > 0) &&
+                  result.offsetPeriodsSaved > 0 && (
+                    <p className="callout">
+                      Your offset account clears the loan{' '}
+                      {describeDuration(result.offsetPeriodsSaved, periodsPerYear)} sooner and
+                      saves {formatCurrency(result.offsetInterestSaved)} in interest.
+                    </p>
+                  )}
+
+                {interestOnly && (
+                  <p className="callout callout--muted">
+                    Interest only repayments for the first {ioYears} year{ioYears === 1 ? '' : 's'}{' '}
+                    don't reduce the principal.{' '}
+                    {result.postInterestOnlyRepayment
+                      ? 'After that, repayments switch to principal and interest for the rest of the term.'
+                      : `The ${formatCurrency(amount)} borrowed is still owing at the end of the term.`}
+                  </p>
+                )}
+              </div>
+            )}
+          </aside>
+        </div>
+
+        <section className="card outlook" aria-label="Loan outlook">
+          <div className="outlook__header">
+            <h2>Loan outlook</h2>
+            <div className="tabs" role="tablist">
+              <TabButton active={view === 'graph'} onClick={() => setView('graph')}>
+                Chart
+              </TabButton>
+              <TabButton active={view === 'table'} onClick={() => setView('table')}>
+                Repayment schedule
+              </TabButton>
+            </div>
+          </div>
+
+          {view === 'graph' ? (
+            <RepaymentsChart
+              balances={result.balances}
+              periodsPerYear={periodsPerYear}
+              termYears={termYears}
+              homeValue={homeValue}
+              homeValueGrowthPercent={homeValueGrowthPercent}
+              legend={
+                interestOnly
+                  ? `Interest only ${ioYears} year${ioYears === 1 ? '' : 's'}, then principal and interest`
+                  : 'Principal and interest (Fixed)'
+              }
+            />
+          ) : (
+            <RepaymentsTable
+              caption={caption}
+              yearlyBalances={result.yearlyBalances}
+              monthlyBalances={result.monthlyBalances}
+              homeValue={homeValue}
+              homeValueGrowthPercent={homeValueGrowthPercent}
+            />
           )}
-
-          <div className="stat">
-            <label className="stat__label" htmlFor="frequency">
-              Repayment frequency
-            </label>
-            <div className="select-wrap">
-              <select
-                id="frequency"
-                className="control"
-                value={frequency}
-                onChange={(event) => setFrequency(event.target.value as Frequency)}
-              >
-                {Object.entries(FREQUENCY_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="stat">
-            <label className="stat__label" htmlFor="extra">
-              Additional repayments
-            </label>
-            <div className="control control--prefixed">
-              <span className="control__prefix">$</span>
-              <input
-                id="extra"
-                inputMode="numeric"
-                value={formatNumber(extraRepayment)}
-                onChange={(event) => setExtraRepayment(parseNumber(event.target.value))}
-              />
-            </div>
-          </div>
-        </div>
-
-        {extraRepayment > 0 && result.periodsSaved > 0 && (
-          <p className="callout">
-            Paying an extra {formatCurrency(extraRepayment)} {FREQUENCY_ADVERBS[frequency]} clears
-            the loan {describeDuration(result.periodsSaved, periodsPerYear)} sooner and saves{' '}
-            {formatCurrency(result.interestSaved)} in interest.
-          </p>
-        )}
-
-        {(offsetBalance > 0 || offsetMonthlyContribution > 0) && result.offsetPeriodsSaved > 0 && (
-          <p className="callout">
-            Your offset account clears the loan{' '}
-            {describeDuration(result.offsetPeriodsSaved, periodsPerYear)} sooner and saves{' '}
-            {formatCurrency(result.offsetInterestSaved)} in interest.
-          </p>
-        )}
-
-        {interestOnly && (
-          <p className="callout callout--muted">
-            Interest only repayments for the first {ioYears} year{ioYears === 1 ? '' : 's'} don't
-            reduce the principal.{' '}
-            {result.postInterestOnlyRepayment
-              ? 'After that, repayments switch to principal and interest for the rest of the term.'
-              : `The ${formatCurrency(amount)} borrowed is still owing at the end of the term.`}
-          </p>
-        )}
-
-        <div className="view-toggle">
-          <ToggleLink active={view === 'graph'} onClick={() => setView('graph')}>
-            Show repayments graph
-          </ToggleLink>
-          <span className="view-toggle__divider" aria-hidden="true">
-            |
-          </span>
-          <ToggleLink active={view === 'table'} onClick={() => setView('table')}>
-            Show repayments table
-          </ToggleLink>
-        </div>
-
-        {view === 'graph' ? (
-          <RepaymentsChart
-            balances={result.balances}
-            periodsPerYear={periodsPerYear}
-            termYears={termYears}
-            homeValue={homeValue}
-            homeValueGrowthPercent={homeValueGrowthPercent}
-            legend={
-              interestOnly
-                ? `Interest only ${ioYears} year${ioYears === 1 ? '' : 's'}, then principal and interest`
-                : 'Principal and interest (Fixed)'
-            }
-          />
-        ) : (
-          <RepaymentsTable
-            caption={caption}
-            yearlyBalances={result.yearlyBalances}
-            monthlyBalances={result.monthlyBalances}
-            homeValue={homeValue}
-            homeValueGrowthPercent={homeValueGrowthPercent}
-          />
-        )}
+        </section>
       </main>
     </div>
   )
 }
 
-interface ToggleLinkProps {
+interface TabButtonProps {
   active: boolean
   onClick: () => void
   children: React.ReactNode
 }
 
-/** The currently shown view is inert and greyed out; the other is a link. */
-function ToggleLink({ active, onClick, children }: ToggleLinkProps) {
+function TabButton({ active, onClick, children }: TabButtonProps) {
   return (
     <button
       type="button"
-      className={`view-toggle__button${active ? ' is-active' : ''}`}
+      role="tab"
+      className={`tabs__button${active ? ' is-active' : ''}`}
+      aria-selected={active}
       onClick={onClick}
-      aria-pressed={active}
     >
       {children}
     </button>

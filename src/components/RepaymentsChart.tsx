@@ -17,6 +17,7 @@ interface Props {
 const WIDTH = 1000
 const HEIGHT = 420
 const PADDING = { top: 24, right: 24, bottom: 8, left: 8 }
+const GRIDLINE_STEPS = 4
 
 export function RepaymentsChart({
   balances,
@@ -78,6 +79,10 @@ export function RepaymentsChart({
   const hovered = hoverIndex === null ? null : points[hoverIndex]
   const hoveredEquity = hoverIndex === null || !showEquity ? null : equityPoints[hoverIndex]
 
+  const yAxisTicks = Array.from({ length: GRIDLINE_STEPS + 1 }, (_, i) =>
+    (maxValue * (GRIDLINE_STEPS - i)) / GRIDLINE_STEPS,
+  )
+
   const handleMove = (event: React.MouseEvent<SVGSVGElement>) => {
     const rect = event.currentTarget.getBoundingClientRect()
     const ratio = (event.clientX - rect.left) / rect.width
@@ -87,86 +92,105 @@ export function RepaymentsChart({
 
   return (
     <div className="chart">
-      <p className="chart__max">{formatCurrency(maxValue)}</p>
+      <div className="chart__header">
+        <p className="chart__title">Loan balance and equity over time</p>
+        <p className="chart__max">Scale to {formatCurrency(maxValue)}</p>
+      </div>
       <div className="chart__canvas">
-        <svg
-          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          preserveAspectRatio="none"
-          role="img"
-          aria-label={
-            showEquity
-              ? `Principal remaining and equity over ${termYears} years`
-              : `Principal remaining over ${termYears} years`
-          }
-          onMouseMove={handleMove}
-          onMouseLeave={() => setHoverIndex(null)}
-        >
-          <path className="chart__line" d={path} vectorEffect="non-scaling-stroke" />
-          {showEquity && (
-            <path
-              className="chart__line chart__line--equity"
-              d={equityPath}
-              vectorEffect="non-scaling-stroke"
+        <div className="chart__yaxis">
+          {yAxisTicks.map((tick, index) => (
+            <span key={index}>{formatCurrency(tick)}</span>
+          ))}
+        </div>
+        <div className="chart__plot">
+          {yAxisTicks.slice(0, -1).map((_tick, index) => (
+            <span
+              key={index}
+              className="chart__gridline"
+              style={{ top: `${(index / GRIDLINE_STEPS) * 100}%` }}
             />
-          )}
-          {hovered && (
-            <line
-              className="chart__crosshair"
-              x1={hovered.x}
-              x2={hovered.x}
-              y1={PADDING.top}
-              y2={HEIGHT - PADDING.bottom}
-              vectorEffect="non-scaling-stroke"
-            />
-          )}
-        </svg>
-        {markers.map((marker) => (
-          <span
-            key={marker.index}
-            className="chart__marker"
-            style={{ left: `${(marker.x / WIDTH) * 100}%`, top: `${(marker.y / HEIGHT) * 100}%` }}
-          />
-        ))}
-        {showEquity &&
-          equityMarkers.map((marker) => (
+          ))}
+          <svg
+            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+            preserveAspectRatio="none"
+            role="img"
+            aria-label={
+              showEquity
+                ? `Principal remaining and equity over ${termYears} years`
+                : `Principal remaining over ${termYears} years`
+            }
+            onMouseMove={handleMove}
+            onMouseLeave={() => setHoverIndex(null)}
+          >
+            <path className="chart__line" d={path} vectorEffect="non-scaling-stroke" />
+            {showEquity && (
+              <path
+                className="chart__line chart__line--equity"
+                d={equityPath}
+                vectorEffect="non-scaling-stroke"
+              />
+            )}
+            {hovered && (
+              <line
+                className="chart__crosshair"
+                x1={hovered.x}
+                x2={hovered.x}
+                y1={PADDING.top}
+                y2={HEIGHT - PADDING.bottom}
+                vectorEffect="non-scaling-stroke"
+              />
+            )}
+          </svg>
+          {markers.map((marker) => (
             <span
               key={marker.index}
-              className="chart__marker chart__marker--equity"
+              className="chart__marker"
               style={{ left: `${(marker.x / WIDTH) * 100}%`, top: `${(marker.y / HEIGHT) * 100}%` }}
             />
           ))}
-        {hovered && (
-          <div
-            className="chart__tooltip"
-            style={{ left: `${(hovered.x / WIDTH) * 100}%`, top: `${(hovered.y / HEIGHT) * 100}%` }}
-          >
-            <strong>{formatCurrency(hovered.value)}</strong>
-            {hoveredEquity && (
-              <strong className="chart__tooltip-equity">
-                {formatCurrency(hoveredEquity.value)} equity
-              </strong>
-            )}
-            <span>{formatYear(hovered.index, periodsPerYear)}</span>
-          </div>
-        )}
+          {showEquity &&
+            equityMarkers.map((marker) => (
+              <span
+                key={marker.index}
+                className="chart__marker chart__marker--equity"
+                style={{ left: `${(marker.x / WIDTH) * 100}%`, top: `${(marker.y / HEIGHT) * 100}%` }}
+              />
+            ))}
+          {hovered && (
+            <div
+              className="chart__tooltip"
+              style={{ left: `${(hovered.x / WIDTH) * 100}%`, top: `${(hovered.y / HEIGHT) * 100}%` }}
+            >
+              <strong>{formatCurrency(hovered.value)}</strong>
+              {hoveredEquity && (
+                <strong className="chart__tooltip-equity">
+                  {formatCurrency(hoveredEquity.value)} equity
+                </strong>
+              )}
+              <span>{formatYear(hovered.index, periodsPerYear)}</span>
+            </div>
+          )}
+        </div>
       </div>
       <div className="chart__axis">
         <span>Today</span>
         <span>{termYears} Years</span>
       </div>
-      <p className="chart__legend">
-        <span className="chart__legend-dot" />
-        {legend}
-      </p>
-      {showEquity && (
-        <p className="chart__legend">
-          <span className="chart__legend-dot chart__legend-dot--equity" />
-          Equity{' '}
-          {homeValueGrowthPercent > 0
-            ? `(assumes the home value grows ${homeValueGrowthPercent}% a year)`
-            : '(assumes a constant home value)'}
-        </p>
-      )}
+      <div className="chart__legend">
+        <span className="legend-chip">
+          <span className="legend-chip__dot" />
+          {legend}
+        </span>
+        {showEquity && (
+          <span className="legend-chip">
+            <span className="legend-chip__dot legend-chip__dot--equity" />
+            Equity{' '}
+            {homeValueGrowthPercent > 0
+              ? `(assumes the home value grows ${homeValueGrowthPercent}% a year)`
+              : '(assumes a constant home value)'}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
