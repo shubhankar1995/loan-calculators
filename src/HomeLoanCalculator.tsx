@@ -25,7 +25,8 @@ export function HomeLoanCalculator() {
   const [homeValue, setHomeValue] = useState(1280000)
   const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
   const [offsetBalance, setOffsetBalance] = useState(0)
-  const [offsetMonthlyContribution, setOffsetMonthlyContribution] = useState(0)
+  const [monthlyIncome, setMonthlyIncome] = useState(0)
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [view, setView] = useState<View>('graph')
 
@@ -39,7 +40,8 @@ export function HomeLoanCalculator() {
         frequency,
         extraRepayment,
         offsetBalance,
-        offsetMonthlyContribution,
+        monthlyIncome,
+        monthlyExpenses,
       }),
     [
       amount,
@@ -49,7 +51,8 @@ export function HomeLoanCalculator() {
       frequency,
       extraRepayment,
       offsetBalance,
-      offsetMonthlyContribution,
+      monthlyIncome,
+      monthlyExpenses,
     ],
   )
 
@@ -80,7 +83,8 @@ export function HomeLoanCalculator() {
             homeValue={homeValue}
             homeValueGrowthPercent={homeValueGrowthPercent}
             offsetBalance={offsetBalance}
-            offsetMonthlyContribution={offsetMonthlyContribution}
+            monthlyIncome={monthlyIncome}
+            monthlyExpenses={monthlyExpenses}
             advancedOpen={advancedOpen}
             onAmountChange={setAmount}
             onStartDateChange={setStartDate}
@@ -92,7 +96,8 @@ export function HomeLoanCalculator() {
             onHomeValueChange={setHomeValue}
             onHomeValueGrowthChange={setHomeValueGrowthPercent}
             onOffsetBalanceChange={setOffsetBalance}
-            onOffsetMonthlyContributionChange={setOffsetMonthlyContribution}
+            onMonthlyIncomeChange={setMonthlyIncome}
+            onMonthlyExpensesChange={setMonthlyExpenses}
             onAdvancedOpenChange={setAdvancedOpen}
           />
         </section>
@@ -136,7 +141,7 @@ export function HomeLoanCalculator() {
             + Add extra repayments
           </button>
 
-          {(extraRepayment > 0 || offsetBalance > 0 || offsetMonthlyContribution > 0 || interestOnly) && (
+          {(extraRepayment > 0 || offsetBalance > 0 || monthlyIncome > 0 || interestOnly) && (
             <div className="summary__callouts">
               {extraRepayment > 0 && result.periodsSaved > 0 && (
                 <p className="callout">
@@ -146,7 +151,7 @@ export function HomeLoanCalculator() {
                 </p>
               )}
 
-              {(offsetBalance > 0 || offsetMonthlyContribution > 0) &&
+              {(offsetBalance > 0 || monthlyIncome > 0) &&
                 result.offsetPeriodsSaved > 0 && (
                   <p className="callout">
                     Your offset account clears the loan{' '}

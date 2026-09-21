@@ -9,7 +9,8 @@ const base = {
   frequency: 'monthly',
   extraRepayment: 0,
   offsetBalance: 0,
-  offsetMonthlyContribution: 0,
+  monthlyIncome: 0,
+  monthlyExpenses: 0,
 } as const
 
 describe('periodicRepayment', () => {
@@ -142,7 +143,12 @@ describe('calculateLoan - additional repayments', () => {
 })
 
 describe('calculateLoan - offset account', () => {
-  const result = calculateLoan({ ...base, offsetBalance: 100000, offsetMonthlyContribution: 500 })
+  const result = calculateLoan({
+    ...base,
+    offsetBalance: 100000,
+    monthlyIncome: 5000,
+    monthlyExpenses: 4500,
+  })
 
   it('reduces interest charged and shortens the term', () => {
     const noOffset = calculateLoan(base)

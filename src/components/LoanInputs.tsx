@@ -1,4 +1,4 @@
-import { type ChangeEvent } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import {
   FREQUENCY_ADVERBS,
   FREQUENCY_LABELS,
@@ -19,7 +19,8 @@ interface Props {
   homeValue: number
   homeValueGrowthPercent: number
   offsetBalance: number
-  offsetMonthlyContribution: number
+  monthlyIncome: number
+  monthlyExpenses: number
   advancedOpen: boolean
   onAmountChange: (value: number) => void
   onStartDateChange: (value: string) => void
@@ -31,7 +32,8 @@ interface Props {
   onHomeValueChange: (value: number) => void
   onHomeValueGrowthChange: (value: number) => void
   onOffsetBalanceChange: (value: number) => void
-  onOffsetMonthlyContributionChange: (value: number) => void
+  onMonthlyIncomeChange: (value: number) => void
+  onMonthlyExpensesChange: (value: number) => void
   onAdvancedOpenChange: (open: boolean) => void
 }
 
@@ -46,7 +48,8 @@ export function LoanInputs({
   homeValue,
   homeValueGrowthPercent,
   offsetBalance,
-  offsetMonthlyContribution,
+  monthlyIncome,
+  monthlyExpenses,
   advancedOpen,
   onAmountChange,
   onStartDateChange,
@@ -58,9 +61,12 @@ export function LoanInputs({
   onHomeValueChange,
   onHomeValueGrowthChange,
   onOffsetBalanceChange,
-  onOffsetMonthlyContributionChange,
+  onMonthlyIncomeChange,
+  onMonthlyExpensesChange,
   onAdvancedOpenChange,
 }: Props) {
+  const [offsetOpen, setOffsetOpen] = useState(false)
+
   const handleAmount = (event: ChangeEvent<HTMLInputElement>) => {
     onAmountChange(parseNumber(event.target.value))
   }
@@ -73,8 +79,12 @@ export function LoanInputs({
     onOffsetBalanceChange(parseNumber(event.target.value))
   }
 
-  const handleOffsetMonthlyContribution = (event: ChangeEvent<HTMLInputElement>) => {
-    onOffsetMonthlyContributionChange(parseNumber(event.target.value))
+  const handleMonthlyIncome = (event: ChangeEvent<HTMLInputElement>) => {
+    onMonthlyIncomeChange(parseNumber(event.target.value))
+  }
+
+  const handleMonthlyExpenses = (event: ChangeEvent<HTMLInputElement>) => {
+    onMonthlyExpensesChange(parseNumber(event.target.value))
   }
 
   return (
@@ -212,33 +222,6 @@ export function LoanInputs({
       >
         <summary>Advanced options</summary>
         <div className="form-grid">
-          <div className="field">
-            <label htmlFor="offset-balance">Offset account balance</label>
-            <div className="control control--unit">
-              <span className="control__prefix">$</span>
-              <input
-                id="offset-balance"
-                inputMode="numeric"
-                value={formatNumber(offsetBalance)}
-                onChange={handleOffsetBalance}
-              />
-            </div>
-          </div>
-
-          <div className="field">
-            <label htmlFor="offset-monthly-contribution">Added to offset</label>
-            <div className="control control--unit">
-              <span className="control__prefix">$</span>
-              <input
-                id="offset-monthly-contribution"
-                inputMode="numeric"
-                value={formatNumber(offsetMonthlyContribution)}
-                onChange={handleOffsetMonthlyContribution}
-              />
-              <span className="control__suffix">per month</span>
-            </div>
-          </div>
-
           <div className="field field--full">
             <label htmlFor="extra">Additional repayments</label>
             <div className="control control--unit">
@@ -253,6 +236,54 @@ export function LoanInputs({
             </div>
           </div>
         </div>
+      </details>
+
+      <details className="advanced" open={offsetOpen} onToggle={(event) => setOffsetOpen(event.currentTarget.open)}>
+        <summary>Offset account</summary>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="offset-balance">Starting account balance</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="offset-balance"
+                inputMode="numeric"
+                value={formatNumber(offsetBalance)}
+                onChange={handleOffsetBalance}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="monthly-income">Monthly household income</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="monthly-income"
+                inputMode="numeric"
+                value={formatNumber(monthlyIncome)}
+                onChange={handleMonthlyIncome}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="monthly-expenses">Monthly expenses</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="monthly-expenses"
+                inputMode="numeric"
+                value={formatNumber(monthlyExpenses)}
+                onChange={handleMonthlyExpenses}
+              />
+            </div>
+          </div>
+        </div>
+        <p className="form-hint">
+          Whatever's left of your income after expenses is swept into the offset account
+          automatically, reducing the interest-bearing balance from day one.
+        </p>
       </details>
     </div>
   )

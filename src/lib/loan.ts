@@ -66,8 +66,10 @@ export interface LoanInput {
   extraRepayment: number
   /** Starting balance of a linked offset account, reduces the interest-bearing balance. */
   offsetBalance: number
-  /** Amount added to the offset account every month. */
-  offsetMonthlyContribution: number
+  /** Monthly household income, used to work out how much is left over to sweep into the offset account. */
+  monthlyIncome: number
+  /** Monthly household expenses, excluding loan repayments. */
+  monthlyExpenses: number
 }
 
 export interface YearlyBalance {
@@ -161,8 +163,13 @@ export function calculateLoan(input: LoanInput): LoanResult {
     totalPeriods,
   )
   const amortisingPeriods = totalPeriods - ioPeriods
-  // The contribution is quoted per month, spread evenly across periods of the chosen frequency.
-  const offsetContributionPerPeriod = (sanitise(input.offsetMonthlyContribution) * 12) / periodsPerYear
+  // Whatever's left of income after expenses is swept into the offset account automatically,
+  // quoted per month and spread evenly across periods of the chosen frequency.
+  const offsetContributionPerMonth = Math.max(
+    sanitise(input.monthlyIncome) - sanitise(input.monthlyExpenses),
+    0,
+  )
+  const offsetContributionPerPeriod = (offsetContributionPerMonth * 12) / periodsPerYear
 
   const scheduledRepayment =
     ioPeriods > 0 ? amount * periodRate : periodicRepayment(amount, periodRate, amortisingPeriods)
