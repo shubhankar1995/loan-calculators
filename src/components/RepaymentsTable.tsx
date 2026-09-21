@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { MonthlyBalance, YearlyBalance } from '../lib/loan'
+import { projectedHomeValue, type MonthlyBalance, type YearlyBalance } from '../lib/loan'
 import { formatCurrency, formatPercent } from '../lib/format'
 
 type Granularity = 'yearly' | 'monthly'
@@ -8,8 +8,10 @@ interface Props {
   caption: string
   yearlyBalances: YearlyBalance[]
   monthlyBalances: MonthlyBalance[]
-  /** Assumed constant home value, used to show equity alongside the principal owing. Omit or zero to hide the column. */
+  /** Home value used to show equity alongside the principal owing. Omit or zero to hide the column. */
   homeValue?: number
+  /** Assumed annual growth in home value, compounded. */
+  homeValueGrowthPercent?: number
 }
 
 export function RepaymentsTable({
@@ -17,6 +19,7 @@ export function RepaymentsTable({
   yearlyBalances,
   monthlyBalances,
   homeValue = 0,
+  homeValueGrowthPercent = 0,
 }: Props) {
   const [granularity, setGranularity] = useState<Granularity>('yearly')
   const showEquity = homeValue > 0
@@ -28,12 +31,18 @@ export function RepaymentsTable({
           remaining: row.yearsRemaining,
           balance: row.balance,
           repayment: row.repayment,
+          projectedHomeValue: projectedHomeValue(homeValue, homeValueGrowthPercent, row.yearsElapsed),
         }))
       : monthlyBalances.map((row) => ({
           key: row.monthsElapsed,
           remaining: row.monthsRemaining,
           balance: row.balance,
           repayment: row.repayment,
+          projectedHomeValue: projectedHomeValue(
+            homeValue,
+            homeValueGrowthPercent,
+            row.monthsElapsed / 12,
+          ),
         }))
 
   return (
@@ -65,6 +74,11 @@ export function RepaymentsTable({
             </th>
             {showEquity && (
               <th scope="col" className="numeric">
+                Est. home value
+              </th>
+            )}
+            {showEquity && (
+              <th scope="col" className="numeric">
                 Equity
               </th>
             )}
@@ -77,10 +91,13 @@ export function RepaymentsTable({
               <td className="numeric">{formatCurrency(row.repayment)}</td>
               <td className="numeric">{formatCurrency(row.balance)}</td>
               {showEquity && (
+                <td className="numeric">{formatCurrency(row.projectedHomeValue)}</td>
+              )}
+              {showEquity && (
                 <td className="numeric">
-                  {formatCurrency(homeValue - row.balance)}
+                  {formatCurrency(row.projectedHomeValue - row.balance)}
                   <span className="repayments-table__percent">
-                    {formatPercent((homeValue - row.balance) / homeValue)}
+                    {formatPercent((row.projectedHomeValue - row.balance) / row.projectedHomeValue)}
                   </span>
                 </td>
               )}

@@ -8,11 +8,13 @@ interface Props {
   ratePercent: number
   repaymentType: RepaymentType
   homeValue: number
+  homeValueGrowthPercent: number
   onAmountChange: (value: number) => void
   onTermChange: (value: number) => void
   onRateChange: (value: number) => void
   onRepaymentTypeChange: (value: RepaymentType) => void
   onHomeValueChange: (value: number) => void
+  onHomeValueGrowthChange: (value: number) => void
 }
 
 export function LoanInputs({
@@ -21,11 +23,13 @@ export function LoanInputs({
   ratePercent,
   repaymentType,
   homeValue,
+  homeValueGrowthPercent,
   onAmountChange,
   onTermChange,
   onRateChange,
   onRepaymentTypeChange,
   onHomeValueChange,
+  onHomeValueGrowthChange,
 }: Props) {
   const handleAmount = (event: ChangeEvent<HTMLInputElement>) => {
     onAmountChange(parseNumber(event.target.value))
@@ -57,6 +61,20 @@ export function LoanInputs({
           value={`$${formatNumber(homeValue)}`}
           onChange={handleHomeValue}
         />
+      </div>
+
+      <div className="field field--growth">
+        <label htmlFor="home-value-growth">Est. value increase</label>
+        <div className="field-row">
+          <input
+            id="home-value-growth"
+            className="control control--narrow"
+            inputMode="decimal"
+            value={homeValueGrowthPercent}
+            onChange={(event) => onHomeValueGrowthChange(parseNumber(event.target.value))}
+          />
+          <span className="suffix">% a year</span>
+        </div>
       </div>
 
       <div className="field field--term">

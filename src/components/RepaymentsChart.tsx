@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { projectedHomeValue } from '../lib/loan'
 import { formatCurrency } from '../lib/format'
 
 interface Props {
@@ -7,8 +8,10 @@ interface Props {
   periodsPerYear: number
   termYears: number
   legend: string
-  /** Assumed constant home value, used to plot equity alongside the principal owing. Omit or zero to hide the line. */
+  /** Home value used to plot equity alongside the principal owing. Omit or zero to hide the line. */
   homeValue?: number
+  /** Assumed annual growth in home value, compounded. */
+  homeValueGrowthPercent?: number
 }
 
 const WIDTH = 1000
@@ -21,12 +24,19 @@ export function RepaymentsChart({
   termYears,
   legend,
   homeValue = 0,
+  homeValueGrowthPercent = 0,
 }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const showEquity = homeValue > 0
 
   const { points, path, markers, equityPoints, equityPath, equityMarkers, maxValue } = useMemo(() => {
-    const equity = showEquity ? balances.map((balance) => homeValue - balance) : []
+    const equity = showEquity
+      ? balances.map(
+          (balance, index) =>
+            projectedHomeValue(homeValue, homeValueGrowthPercent, index / periodsPerYear) -
+            balance,
+        )
+      : []
     const max = Math.max(...balances, ...equity, 1)
     const lastIndex = Math.max(balances.length - 1, 1)
     const plotWidth = WIDTH - PADDING.left - PADDING.right
@@ -63,7 +73,7 @@ export function RepaymentsChart({
       equityMarkers: markerIndexes.map((i) => equityMapped[i]),
       maxValue: max,
     }
-  }, [balances, homeValue, showEquity])
+  }, [balances, homeValue, homeValueGrowthPercent, periodsPerYear, showEquity])
 
   const hovered = hoverIndex === null ? null : points[hoverIndex]
   const hoveredEquity = hoverIndex === null || !showEquity ? null : equityPoints[hoverIndex]
@@ -151,7 +161,10 @@ export function RepaymentsChart({
       {showEquity && (
         <p className="chart__legend">
           <span className="chart__legend-dot chart__legend-dot--equity" />
-          Equity (assumes a constant home value)
+          Equity{' '}
+          {homeValueGrowthPercent > 0
+            ? `(assumes the home value grows ${homeValueGrowthPercent}% a year)`
+            : '(assumes a constant home value)'}
         </p>
       )}
     </div>

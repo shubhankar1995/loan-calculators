@@ -17,6 +17,17 @@ export const REPAYMENT_TYPE_LABELS: Record<RepaymentType, string> = {
   'interest-only-5': 'Interest only 5 years',
 }
 
+/** Compounds a home value forward by a constant annual growth rate. */
+export function projectedHomeValue(
+  homeValue: number,
+  annualGrowthPercent: number,
+  years: number,
+): number {
+  if (homeValue <= 0) return 0
+  const rate = Number.isFinite(annualGrowthPercent) ? annualGrowthPercent / 100 : 0
+  return homeValue * Math.pow(1 + rate, years)
+}
+
 /** Number of years an interest-only period lasts before switching to principal and interest, 0 for P&I. */
 export function interestOnlyYears(repaymentType: RepaymentType): number {
   if (repaymentType === 'principal-and-interest') return 0

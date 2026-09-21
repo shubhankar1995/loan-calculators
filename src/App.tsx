@@ -29,6 +29,7 @@ export default function App() {
   const [frequency, setFrequency] = useState<Frequency>('monthly')
   const [extraRepayment, setExtraRepayment] = useState(0)
   const [homeValue, setHomeValue] = useState(1280000)
+  const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
   const [view, setView] = useState<View>('graph')
 
   const result = useMemo(
@@ -65,11 +66,13 @@ export default function App() {
           ratePercent={ratePercent}
           repaymentType={repaymentType}
           homeValue={homeValue}
+          homeValueGrowthPercent={homeValueGrowthPercent}
           onAmountChange={setAmount}
           onTermChange={setTermYears}
           onRateChange={setRatePercent}
           onRepaymentTypeChange={setRepaymentType}
           onHomeValueChange={setHomeValue}
+          onHomeValueGrowthChange={setHomeValueGrowthPercent}
         />
 
         <h2 className="section-title">Your {FREQUENCY_ADVERBS[frequency]} repayments</h2>
@@ -175,6 +178,7 @@ export default function App() {
             periodsPerYear={periodsPerYear}
             termYears={termYears}
             homeValue={homeValue}
+            homeValueGrowthPercent={homeValueGrowthPercent}
             legend={
               interestOnly
                 ? `Interest only ${ioYears} year${ioYears === 1 ? '' : 's'}, then principal and interest`
@@ -187,6 +191,7 @@ export default function App() {
             yearlyBalances={result.yearlyBalances}
             monthlyBalances={result.monthlyBalances}
             homeValue={homeValue}
+            homeValueGrowthPercent={homeValueGrowthPercent}
           />
         )}
       </main>

@@ -36,6 +36,10 @@
   flex: 0 1 220px;
 }
 
+.field--growth {
+  flex: 0 1 140px;
+}
+
 .field label {
   font-size: 15px;
   color: var(--ink-soft);
