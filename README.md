@@ -1,8 +1,15 @@
-# Loan repayment calculator
+# LoanLab
 
-A React + TypeScript loan repayment calculator (Vite). Enter a loan amount, term,
-repayment type and interest rate to see the repayment, the total cost of the loan,
-and how the principal is paid down — as either a graph or a year-by-year table.
+Repayments, modelled properly.
+
+A React + TypeScript loan calculator (Vite) with two modes:
+
+- **Home Loan Repayment** — enter a loan amount, term, repayment type and interest
+  rate to see the repayment, the total cost of the loan, and how the principal is
+  paid down, as either a graph or a year-by-year table.
+- **House and Land Package** — model a build stage by stage, with progressive
+  drawdown, interest-only repayments during construction, and the switch to
+  principal and interest at handover.
 
 ## Running it
 

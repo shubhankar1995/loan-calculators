@@ -37,6 +37,39 @@
   border-bottom: 1px solid var(--line-soft);
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.brand__mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  color: var(--accent);
+  border-radius: var(--radius);
+}
+
+.brand__name {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+
+.brand__name-accent {
+  color: var(--accent);
+}
+
+.brand__tagline {
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .page-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -773,6 +806,10 @@
 @media (max-width: 640px) {
   .calculator {
     gap: 24px;
+  }
+
+  .brand__tagline {
+    display: none;
   }
 
   .card {
