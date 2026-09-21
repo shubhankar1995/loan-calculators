@@ -5,7 +5,8 @@ import { formatNumber, parseNumber } from '../lib/format'
 interface Props {
   landAmount: number
   constructionAmount: number
-  depositAmount: number
+  landDepositAmount: number
+  constructionDepositAmount: number
   startDate: string
   termYears: number
   ratePercent: number
@@ -16,7 +17,8 @@ interface Props {
   advancedOpen: boolean
   onLandAmountChange: (value: number) => void
   onConstructionAmountChange: (value: number) => void
-  onDepositAmountChange: (value: number) => void
+  onLandDepositAmountChange: (value: number) => void
+  onConstructionDepositAmountChange: (value: number) => void
   onStartDateChange: (value: string) => void
   onTermChange: (value: number) => void
   onRateChange: (value: number) => void
@@ -30,7 +32,8 @@ interface Props {
 export function HouseAndLandInputs({
   landAmount,
   constructionAmount,
-  depositAmount,
+  landDepositAmount,
+  constructionDepositAmount,
   startDate,
   termYears,
   ratePercent,
@@ -41,7 +44,8 @@ export function HouseAndLandInputs({
   advancedOpen,
   onLandAmountChange,
   onConstructionAmountChange,
-  onDepositAmountChange,
+  onLandDepositAmountChange,
+  onConstructionDepositAmountChange,
   onStartDateChange,
   onTermChange,
   onRateChange,
@@ -59,8 +63,12 @@ export function HouseAndLandInputs({
     onConstructionAmountChange(parseNumber(event.target.value))
   }
 
-  const handleDepositAmount = (event: ChangeEvent<HTMLInputElement>) => {
-    onDepositAmountChange(parseNumber(event.target.value))
+  const handleLandDepositAmount = (event: ChangeEvent<HTMLInputElement>) => {
+    onLandDepositAmountChange(parseNumber(event.target.value))
+  }
+
+  const handleConstructionDepositAmount = (event: ChangeEvent<HTMLInputElement>) => {
+    onConstructionDepositAmountChange(parseNumber(event.target.value))
   }
 
   const handleHomeValue = (event: ChangeEvent<HTMLInputElement>) => {
@@ -92,14 +100,14 @@ export function HouseAndLandInputs({
           </div>
 
           <div className="field">
-            <label htmlFor="deposit-amount">Deposit paid</label>
+            <label htmlFor="land-deposit-amount">Deposit paid</label>
             <div className="control control--unit">
               <span className="control__prefix">$</span>
               <input
-                id="deposit-amount"
+                id="land-deposit-amount"
                 inputMode="numeric"
-                value={formatNumber(depositAmount)}
-                onChange={handleDepositAmount}
+                value={formatNumber(landDepositAmount)}
+                onChange={handleLandDepositAmount}
               />
             </div>
           </div>
@@ -155,16 +163,13 @@ export function HouseAndLandInputs({
             </div>
           </div>
         </div>
-        <p className="form-hint">
-          The deposit reduces the amount borrowed — applied to the land price first, then any
-          leftover to the construction price.
-        </p>
+        <p className="form-hint">The deposit reduces the amount borrowed for the land.</p>
       </div>
 
       <div className="form-section">
         <h3 className="form-section__title">Construction</h3>
         <div className="form-grid">
-          <div className="field field--full">
+          <div className="field">
             <label htmlFor="construction-amount">Construction price</label>
             <div className="control control--unit">
               <span className="control__prefix">$</span>
@@ -176,9 +181,23 @@ export function HouseAndLandInputs({
               />
             </div>
           </div>
+
+          <div className="field">
+            <label htmlFor="construction-deposit-amount">Deposit paid</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="construction-deposit-amount"
+                inputMode="numeric"
+                value={formatNumber(constructionDepositAmount)}
+                onChange={handleConstructionDepositAmount}
+              />
+            </div>
+          </div>
         </div>
         <p className="form-hint">
-          Drawn down progressively as each build stage completes. Interest is only charged on the
+          The deposit reduces the amount drawn down for the build. The remaining construction
+          loan draws down progressively as each build stage completes, interest-only on the
           amount drawn so far, then the full loan switches to principal and interest once
           construction finishes.
         </p>
