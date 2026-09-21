@@ -7,7 +7,8 @@ import {
   calculateHouseAndLand,
   type ConstructionStage,
 } from './lib/houseAndLand'
-import { formatCurrency, formatRepayment, todayISODate } from './lib/format'
+import { describeDuration, formatCurrency, formatRepayment, todayISODate } from './lib/format'
+import { PERIODS_PER_YEAR } from './lib/loan'
 
 type View = 'graph' | 'table'
 
@@ -23,6 +24,8 @@ export function HouseAndLandCalculator() {
   const [stages, setStages] = useState<ConstructionStage[]>(DEFAULT_CONSTRUCTION_STAGES)
   const [homeValue, setHomeValue] = useState(1281660)
   const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
+  const [offsetBalance, setOffsetBalance] = useState(0)
+  const [offsetMonthlyContribution, setOffsetMonthlyContribution] = useState(0)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [view, setView] = useState<View>('graph')
 
@@ -37,6 +40,10 @@ export function HouseAndLandCalculator() {
         annualRatePercent: ratePercent,
         constructionMonths,
         stages,
+        homeValue,
+        homeValueGrowthPercent,
+        offsetBalance,
+        offsetMonthlyContribution,
       }),
     [
       landAmount,
@@ -47,12 +54,20 @@ export function HouseAndLandCalculator() {
       ratePercent,
       constructionMonths,
       stages,
+      homeValue,
+      homeValueGrowthPercent,
+      offsetBalance,
+      offsetMonthlyContribution,
     ],
   )
 
   const caption = `Interest rate ${ratePercent}% p.a., interest only for the ${constructionMonths} month build, then principal and interest of ${formatRepayment(
     result.postConstructionRepayment,
   )} a month`
+
+  const equityLegend = `(ramps from the land value up to the completed home value as construction finishes, then ${
+    homeValueGrowthPercent > 0 ? `grows ${homeValueGrowthPercent}% a year` : 'stays constant'
+  })`
 
   return (
     <>
@@ -75,6 +90,8 @@ export function HouseAndLandCalculator() {
             stages={stages}
             homeValue={homeValue}
             homeValueGrowthPercent={homeValueGrowthPercent}
+            offsetBalance={offsetBalance}
+            offsetMonthlyContribution={offsetMonthlyContribution}
             advancedOpen={advancedOpen}
             onLandAmountChange={setLandAmount}
             onConstructionAmountChange={setConstructionAmount}
@@ -87,6 +104,8 @@ export function HouseAndLandCalculator() {
             onStagesChange={setStages}
             onHomeValueChange={setHomeValue}
             onHomeValueGrowthChange={setHomeValueGrowthPercent}
+            onOffsetBalanceChange={setOffsetBalance}
+            onOffsetMonthlyContributionChange={setOffsetMonthlyContribution}
             onAdvancedOpenChange={setAdvancedOpen}
           />
         </section>
@@ -123,6 +142,14 @@ export function HouseAndLandCalculator() {
           </div>
 
           <div className="summary__callouts">
+            {(offsetBalance > 0 || offsetMonthlyContribution > 0) && result.offsetMonthsSaved > 0 && (
+              <p className="callout">
+                Your offset account clears the loan{' '}
+                {describeDuration(result.offsetMonthsSaved, PERIODS_PER_YEAR.monthly)} sooner and
+                saves {formatCurrency(result.offsetInterestSaved)} in interest.
+              </p>
+            )}
+
             <p className="callout callout--muted">
               Interest only during the {constructionMonths} month build, charged on the amount
               drawn so far. Once construction completes, the full {formatCurrency(result.totalAmount)}{' '}
@@ -150,8 +177,8 @@ export function HouseAndLandCalculator() {
             balances={result.balances}
             periodsPerYear={12}
             termYears={termYears}
-            homeValue={homeValue}
-            homeValueGrowthPercent={homeValueGrowthPercent}
+            propertyValues={result.propertyValues}
+            equityLegend={equityLegend}
             legend={`Interest only during construction (${constructionMonths} months), then principal and interest`}
           />
         ) : (
@@ -160,8 +187,7 @@ export function HouseAndLandCalculator() {
             startDate={startDate}
             yearlyBalances={result.yearlyBalances}
             monthlyBalances={result.monthlyBalances}
-            homeValue={homeValue}
-            homeValueGrowthPercent={homeValueGrowthPercent}
+            propertyValues={result.propertyValues}
           />
         )}
       </section>

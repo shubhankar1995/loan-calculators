@@ -1,5 +1,6 @@
 import {
   periodicRepayment,
+  projectedHomeValue,
   sanitise,
   toMonthlyBalances,
   toYearlyBalances,
@@ -37,6 +38,14 @@ export interface HouseAndLandInput {
   /** Months the build takes, over which the construction stages draw down. */
   constructionMonths: number
   stages: ConstructionStage[]
+  /** Estimated value of the completed home, used to project equity. Zero hides equity. */
+  homeValue: number
+  /** Assumed annual growth in home value, compounded, applied once construction completes. */
+  homeValueGrowthPercent: number
+  /** Starting balance of a linked offset account, reduces the interest-bearing balance. */
+  offsetBalance: number
+  /** Amount added to the offset account every month. */
+  offsetMonthlyContribution: number
 }
 
 export interface HouseAndLandResult {
@@ -50,8 +59,18 @@ export interface HouseAndLandResult {
   totalAmount: number
   totalRepayments: number
   totalInterest: number
+  /** Months saved thanks to the offset account, holding the loan and build inputs constant. */
+  offsetMonthsSaved: number
+  /** Interest saved thanks to the offset account. */
+  offsetInterestSaved: number
   /** Balance at the end of every month, index 0 being the opening balance. */
   balances: number[]
+  /**
+   * Estimated property value at the end of every month, aligned with `balances`. Ramps from
+   * the land price up to the completed home value as construction progresses (rather than
+   * jumping to the completed value on day one), then compounds at the growth rate once built.
+   */
+  propertyValues: number[]
   yearlyBalances: YearlyBalance[]
   monthlyBalances: MonthlyBalance[]
 }
@@ -83,58 +102,110 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
   const stages = input.stages.length > 0 ? input.stages : DEFAULT_CONSTRUCTION_STAGES
   const totalPercent = stages.reduce((sum, stage) => sum + Math.max(stage.percent, 0), 0) || 100
 
-  const drawnByMonth = (month: number): number => {
-    if (constructionMonths <= 0) return constructionAmount
-    let drawn = 0
+  /** Fraction of the build physically complete by the end of `month`, independent of dollar amounts. */
+  const stageProgressByMonth = (month: number): number => {
+    if (constructionMonths <= 0) return 1
+    let progress = 0
     stages.forEach((stage, index) => {
       const stageMonth = Math.round(((index + 1) / stages.length) * constructionMonths)
-      if (month >= stageMonth) drawn += (Math.max(stage.percent, 0) / totalPercent) * constructionAmount
+      if (month >= stageMonth) progress += Math.max(stage.percent, 0) / totalPercent
     })
-    return Math.min(drawn, constructionAmount)
+    return Math.min(progress, 1)
   }
 
-  const balances: number[] = [constructionMonths <= 0 ? totalAmount : landAmount]
-  const payments: number[] = [0]
-  let totalInterest = 0
-  let totalRepayments = 0
+  const drawnByMonth = (month: number): number => stageProgressByMonth(month) * constructionAmount
 
   const constructionEndMonth = Math.min(constructionMonths, totalMonths)
-  for (let month = 1; month <= constructionEndMonth; month += 1) {
-    const priorBalance = balances[balances.length - 1]
-    const interest = priorBalance * monthlyRate
-    const balance = landAmount + drawnByMonth(month)
-    totalInterest += interest
-    totalRepayments += interest
-    balances.push(balance)
-    payments.push(interest)
-  }
-
   const remainingMonths = Math.max(totalMonths - constructionEndMonth, 0)
   const postConstructionRepayment = periodicRepayment(totalAmount, monthlyRate, remainingMonths)
 
-  let balance = balances[balances.length - 1]
-  for (let month = 1; month <= remainingMonths && balance > 0; month += 1) {
-    const interest = balance * monthlyRate
-    const payment = Math.min(postConstructionRepayment, balance + interest)
-    balance = balance + interest - payment
-    if (balance < 1e-6) balance = 0
-    totalInterest += interest
-    totalRepayments += payment
-    balances.push(balance)
-    payments.push(payment)
+  /**
+   * Runs the full construction-then-amortisation schedule for a given offset account, so the
+   * effect of the offset can be measured against a baseline with no offset.
+   */
+  const simulate = (startingOffset: number, contributionPerMonth: number) => {
+    const balances: number[] = [constructionMonths <= 0 ? totalAmount : landAmount]
+    const payments: number[] = [0]
+    const offsetBalances: number[] = [startingOffset]
+    let offset = startingOffset
+    let totalInterest = 0
+    let totalRepayments = 0
+    let monthsToRepay = 0
+
+    for (let month = 1; month <= constructionEndMonth; month += 1) {
+      const priorBalance = balances[balances.length - 1]
+      const interestBearingBalance = Math.max(priorBalance - offset, 0)
+      const interest = interestBearingBalance * monthlyRate
+      const balance = landAmount + drawnByMonth(month)
+      offset += contributionPerMonth
+      totalInterest += interest
+      totalRepayments += interest
+      monthsToRepay = month
+      balances.push(balance)
+      payments.push(interest)
+      offsetBalances.push(offset)
+    }
+
+    let balance = balances[balances.length - 1]
+    for (let month = 1; month <= remainingMonths && balance > 0; month += 1) {
+      const interestBearingBalance = Math.max(balance - offset, 0)
+      const interest = interestBearingBalance * monthlyRate
+      const payment = Math.min(postConstructionRepayment, balance + interest)
+      balance = balance + interest - payment
+      if (balance < 1e-6) balance = 0
+      offset += contributionPerMonth
+      totalInterest += interest
+      totalRepayments += payment
+      monthsToRepay = constructionEndMonth + month
+      balances.push(balance)
+      payments.push(payment)
+      offsetBalances.push(offset)
+    }
+
+    return { balances, payments, offsetBalances, totalInterest, totalRepayments, monthsToRepay }
   }
 
-  const offsetBalances = balances.map(() => 0)
+  const offsetBalance = sanitise(input.offsetBalance)
+  const offsetMonthlyContribution = sanitise(input.offsetMonthlyContribution)
+  const withOffset = simulate(offsetBalance, offsetMonthlyContribution)
+  const noOffset =
+    offsetBalance > 0 || offsetMonthlyContribution > 0 ? simulate(0, 0) : withOffset
+
+  const homeValue = Number.isFinite(input.homeValue) && input.homeValue > 0 ? input.homeValue : 0
+  const propertyValueAtMonth = (month: number): number => {
+    if (homeValue <= 0) return 0
+    if (month >= constructionEndMonth) {
+      const yearsPastCompletion = (month - constructionEndMonth) / 12
+      return projectedHomeValue(homeValue, input.homeValueGrowthPercent, yearsPastCompletion)
+    }
+    return landPrice + stageProgressByMonth(month) * (homeValue - landPrice)
+  }
+  const propertyValues = withOffset.balances.map((_, month) => propertyValueAtMonth(month))
 
   return {
     landRepayment: landAmount * monthlyRate,
     finalConstructionRepayment: totalAmount * monthlyRate,
     postConstructionRepayment,
     totalAmount,
-    totalRepayments,
-    totalInterest,
-    balances,
-    yearlyBalances: toYearlyBalances(balances, payments, offsetBalances, 12, termYears),
-    monthlyBalances: toMonthlyBalances(balances, payments, offsetBalances, 12, termYears),
+    totalRepayments: withOffset.totalRepayments,
+    totalInterest: withOffset.totalInterest,
+    offsetMonthsSaved: noOffset.monthsToRepay - withOffset.monthsToRepay,
+    offsetInterestSaved: noOffset.totalInterest - withOffset.totalInterest,
+    balances: withOffset.balances,
+    propertyValues,
+    yearlyBalances: toYearlyBalances(
+      withOffset.balances,
+      withOffset.payments,
+      withOffset.offsetBalances,
+      12,
+      termYears,
+    ),
+    monthlyBalances: toMonthlyBalances(
+      withOffset.balances,
+      withOffset.payments,
+      withOffset.offsetBalances,
+      12,
+      termYears,
+    ),
   }
 }

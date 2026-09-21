@@ -36,6 +36,12 @@ interface Props {
   homeValue?: number
   /** Assumed annual growth in home value, compounded. */
   homeValueGrowthPercent?: number
+  /**
+   * Precomputed property value at each month (index 0 being the opening balance), overriding
+   * the homeValue/growth projection — use when the value doesn't simply compound, e.g. ramping
+   * up from a land price during construction.
+   */
+  propertyValues?: number[]
 }
 
 export function RepaymentsTable({
@@ -45,11 +51,17 @@ export function RepaymentsTable({
   monthlyBalances,
   homeValue = 0,
   homeValueGrowthPercent = 0,
+  propertyValues,
 }: Props) {
   const [granularity, setGranularity] = useState<Granularity>('yearly')
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
-  const showEquity = homeValue > 0
+  const showEquity = propertyValues ? propertyValues.some((value) => value > 0) : homeValue > 0
   const start = parseISODate(startDate)
+
+  const valueAt = (monthsElapsed: number): number =>
+    propertyValues
+      ? propertyValues[monthsElapsed] ?? 0
+      : projectedHomeValue(homeValue, homeValueGrowthPercent, monthsElapsed / 12)
 
   const rows: Row[] =
     granularity === 'yearly'
@@ -62,7 +74,7 @@ export function RepaymentsTable({
             balance: row.balance,
             repayment: row.repayment,
             offsetBalance: row.offsetBalance,
-            projectedHomeValue: projectedHomeValue(homeValue, homeValueGrowthPercent, row.yearsElapsed),
+            projectedHomeValue: valueAt(row.yearsElapsed * 12),
           }
         })
       : monthlyBalances.map((row) => {
@@ -74,11 +86,7 @@ export function RepaymentsTable({
             balance: row.balance,
             repayment: row.repayment,
             offsetBalance: row.offsetBalance,
-            projectedHomeValue: projectedHomeValue(
-              homeValue,
-              homeValueGrowthPercent,
-              row.monthsElapsed / 12,
-            ),
+            projectedHomeValue: valueAt(row.monthsElapsed),
           }
         })
 

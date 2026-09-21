@@ -11,6 +11,10 @@ const base = {
   annualRatePercent: 6,
   constructionMonths: 10,
   stages: DEFAULT_CONSTRUCTION_STAGES,
+  homeValue: 0,
+  homeValueGrowthPercent: 0,
+  offsetBalance: 0,
+  offsetMonthlyContribution: 0,
 } as const
 
 describe('calculateHouseAndLand - construction phase', () => {
@@ -151,6 +155,73 @@ describe('calculateHouseAndLand - both deposits', () => {
       constructionDepositAmount: 10000000,
     })
     expect(result.totalAmount).toBe(0)
+    expect(result.totalInterest).toBe(0)
+  })
+})
+
+describe('calculateHouseAndLand - property value ramp', () => {
+  const homeValue = 900000
+
+  it('hides equity when no home value is given', () => {
+    const result = calculateHouseAndLand(base)
+    expect(result.propertyValues.every((value) => value === 0)).toBe(true)
+  })
+
+  it('starts at the land price, not the completed home value, before any building happens', () => {
+    const result = calculateHouseAndLand({ ...base, homeValue })
+    expect(result.propertyValues[0]).toBeCloseTo(base.landAmount, 6)
+  })
+
+  it('ramps up to the completed home value as each stage completes', () => {
+    const result = calculateHouseAndLand({ ...base, homeValue })
+    for (let month = 1; month < base.constructionMonths; month += 1) {
+      expect(result.propertyValues[month]).toBeGreaterThanOrEqual(result.propertyValues[month - 1])
+      expect(result.propertyValues[month]).toBeLessThanOrEqual(homeValue)
+    }
+    expect(result.propertyValues[base.constructionMonths]).toBeCloseTo(homeValue, 6)
+  })
+
+  it('compounds growth from the completed value once construction finishes', () => {
+    const result = calculateHouseAndLand({ ...base, homeValue, homeValueGrowthPercent: 5 })
+    const oneYearAfterCompletion = base.constructionMonths + 12
+    expect(result.propertyValues[oneYearAfterCompletion]).toBeCloseTo(homeValue * 1.05, 6)
+  })
+
+  it('never gives a false equity spike at the start (land value stays below the loan-free equity)', () => {
+    const result = calculateHouseAndLand({ ...base, homeValue })
+    const equityAtStart = result.propertyValues[0] - result.balances[0]
+    expect(equityAtStart).toBeCloseTo(0, 6)
+  })
+})
+
+describe('calculateHouseAndLand - offset account', () => {
+  it('reduces interest charged and shortens the term', () => {
+    const result = calculateHouseAndLand({
+      ...base,
+      offsetBalance: 100000,
+      offsetMonthlyContribution: 500,
+    })
+    const noOffset = calculateHouseAndLand(base)
+    expect(result.totalInterest).toBeLessThan(noOffset.totalInterest)
+    expect(result.offsetInterestSaved).toBeGreaterThan(0)
+    expect(result.offsetMonthsSaved).toBeGreaterThan(0)
+  })
+
+  it('still repays exactly the amount borrowed', () => {
+    const result = calculateHouseAndLand({ ...base, offsetBalance: 100000 })
+    const totalAmount = base.landAmount + base.constructionAmount
+    expect(Math.round(result.totalRepayments - result.totalInterest)).toBe(Math.round(totalAmount))
+  })
+
+  it('reduces interest during construction too, since it is interest-only on the drawn balance', () => {
+    const withOffset = calculateHouseAndLand({ ...base, offsetBalance: base.landAmount })
+    const noOffset = calculateHouseAndLand(base)
+    expect(withOffset.balances[0]).toBe(noOffset.balances[0])
+    expect(withOffset.monthlyBalances[1].repayment).toBeLessThan(noOffset.monthlyBalances[1].repayment)
+  })
+
+  it('does not charge negative interest once the offset exceeds the balance', () => {
+    const result = calculateHouseAndLand({ ...base, offsetBalance: base.landAmount + base.constructionAmount + 100000 })
     expect(result.totalInterest).toBe(0)
   })
 })

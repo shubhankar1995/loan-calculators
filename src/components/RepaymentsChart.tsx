@@ -12,6 +12,14 @@ interface Props {
   homeValue?: number
   /** Assumed annual growth in home value, compounded. */
   homeValueGrowthPercent?: number
+  /**
+   * Precomputed property value at each period (same index as `balances`), overriding the
+   * homeValue/growth projection — use when the value doesn't simply compound, e.g. ramping up
+   * from a land price during construction.
+   */
+  propertyValues?: number[]
+  /** Overrides the auto-generated equity legend caption. */
+  equityLegend?: string
 }
 
 const WIDTH = 1000
@@ -26,17 +34,20 @@ export function RepaymentsChart({
   legend,
   homeValue = 0,
   homeValueGrowthPercent = 0,
+  propertyValues,
+  equityLegend,
 }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
-  const showEquity = homeValue > 0
+  const showEquity = propertyValues ? propertyValues.some((value) => value > 0) : homeValue > 0
 
   const { points, path, markers, equityPoints, equityPath, equityMarkers, maxValue } = useMemo(() => {
     const equity = showEquity
-      ? balances.map(
-          (balance, index) =>
-            projectedHomeValue(homeValue, homeValueGrowthPercent, index / periodsPerYear) -
-            balance,
-        )
+      ? balances.map((balance, index) => {
+          const value = propertyValues
+            ? propertyValues[index] ?? 0
+            : projectedHomeValue(homeValue, homeValueGrowthPercent, index / periodsPerYear)
+          return value - balance
+        })
       : []
     const max = Math.max(...balances, ...equity, 1)
     const lastIndex = Math.max(balances.length - 1, 1)
@@ -74,7 +85,7 @@ export function RepaymentsChart({
       equityMarkers: markerIndexes.map((i) => equityMapped[i]),
       maxValue: max,
     }
-  }, [balances, homeValue, homeValueGrowthPercent, periodsPerYear, showEquity])
+  }, [balances, homeValue, homeValueGrowthPercent, periodsPerYear, propertyValues, showEquity])
 
   const hovered = hoverIndex === null ? null : points[hoverIndex]
   const hoveredEquity = hoverIndex === null || !showEquity ? null : equityPoints[hoverIndex]
@@ -185,9 +196,10 @@ export function RepaymentsChart({
           <span className="legend-chip">
             <span className="legend-chip__dot legend-chip__dot--equity" />
             Equity{' '}
-            {homeValueGrowthPercent > 0
-              ? `(assumes the home value grows ${homeValueGrowthPercent}% a year)`
-              : '(assumes a constant home value)'}
+            {equityLegend ??
+              (homeValueGrowthPercent > 0
+                ? `(assumes the home value grows ${homeValueGrowthPercent}% a year)`
+                : '(assumes a constant home value)')}
           </span>
         )}
       </div>

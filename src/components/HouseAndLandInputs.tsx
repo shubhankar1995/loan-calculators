@@ -1,4 +1,4 @@
-import { type ChangeEvent } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import type { ConstructionStage } from '../lib/houseAndLand'
 import { formatNumber, parseNumber } from '../lib/format'
 
@@ -14,6 +14,8 @@ interface Props {
   stages: ConstructionStage[]
   homeValue: number
   homeValueGrowthPercent: number
+  offsetBalance: number
+  offsetMonthlyContribution: number
   advancedOpen: boolean
   onLandAmountChange: (value: number) => void
   onConstructionAmountChange: (value: number) => void
@@ -26,6 +28,8 @@ interface Props {
   onStagesChange: (stages: ConstructionStage[]) => void
   onHomeValueChange: (value: number) => void
   onHomeValueGrowthChange: (value: number) => void
+  onOffsetBalanceChange: (value: number) => void
+  onOffsetMonthlyContributionChange: (value: number) => void
   onAdvancedOpenChange: (open: boolean) => void
 }
 
@@ -41,6 +45,8 @@ export function HouseAndLandInputs({
   stages,
   homeValue,
   homeValueGrowthPercent,
+  offsetBalance,
+  offsetMonthlyContribution,
   advancedOpen,
   onLandAmountChange,
   onConstructionAmountChange,
@@ -53,8 +59,12 @@ export function HouseAndLandInputs({
   onStagesChange,
   onHomeValueChange,
   onHomeValueGrowthChange,
+  onOffsetBalanceChange,
+  onOffsetMonthlyContributionChange,
   onAdvancedOpenChange,
 }: Props) {
+  const [offsetOpen, setOffsetOpen] = useState(false)
+
   const handleLandAmount = (event: ChangeEvent<HTMLInputElement>) => {
     onLandAmountChange(parseNumber(event.target.value))
   }
@@ -73,6 +83,14 @@ export function HouseAndLandInputs({
 
   const handleHomeValue = (event: ChangeEvent<HTMLInputElement>) => {
     onHomeValueChange(parseNumber(event.target.value))
+  }
+
+  const handleOffsetBalance = (event: ChangeEvent<HTMLInputElement>) => {
+    onOffsetBalanceChange(parseNumber(event.target.value))
+  }
+
+  const handleOffsetMonthlyContribution = (event: ChangeEvent<HTMLInputElement>) => {
+    onOffsetMonthlyContributionChange(parseNumber(event.target.value))
   }
 
   const handleStagePercent = (index: number, value: number) => {
@@ -258,6 +276,45 @@ export function HouseAndLandInputs({
         </div>
         <p className={`form-hint${stagesTotal === 100 ? '' : ' form-hint--warning'}`}>
           Stages total {stagesTotal}%{stagesTotal !== 100 ? ' — percentages are rescaled to 100% automatically.' : '.'}
+        </p>
+      </details>
+
+      <details
+        className="advanced"
+        open={offsetOpen}
+        onToggle={(event) => setOffsetOpen(event.currentTarget.open)}
+      >
+        <summary>Offset account</summary>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="offset-balance">Offset account balance</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="offset-balance"
+                inputMode="numeric"
+                value={formatNumber(offsetBalance)}
+                onChange={handleOffsetBalance}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="offset-monthly-contribution">Added to offset</label>
+            <div className="control control--unit">
+              <span className="control__prefix">$</span>
+              <input
+                id="offset-monthly-contribution"
+                inputMode="numeric"
+                value={formatNumber(offsetMonthlyContribution)}
+                onChange={handleOffsetMonthlyContribution}
+              />
+              <span className="control__suffix">per month</span>
+            </div>
+          </div>
+        </div>
+        <p className="form-hint">
+          Reduces the interest-bearing balance from day one, including during construction.
         </p>
       </details>
     </div>
