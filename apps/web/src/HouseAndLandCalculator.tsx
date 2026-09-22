@@ -2,35 +2,43 @@ import { useMemo, useState } from 'react'
 import { HouseAndLandInputs } from './components/HouseAndLandInputs'
 import { RepaymentsChart } from './components/RepaymentsChart'
 import { RepaymentsTable } from './components/RepaymentsTable'
+import { SavedDetailsNote } from './components/SavedDetailsNote'
+import { usePersistentSettings } from './hooks/usePersistentState'
 import {
-  DEFAULT_CONSTRUCTION_STAGES,
   PERIODS_PER_YEAR,
+  STORAGE_KEYS,
   calculateHouseAndLand,
   describeDuration,
   formatCurrency,
   formatRepayment,
-  todayISODate,
-  type ConstructionStage,
+  parseHouseAndLandSettings,
 } from '@repayly/core'
 
 type View = 'graph' | 'table'
 
 export function HouseAndLandCalculator() {
-  const [landAmount, setLandAmount] = useState(780000)
-  const [constructionAmount, setConstructionAmount] = useState(501660)
-  const [landDepositAmount, setLandDepositAmount] = useState(0)
-  const [constructionDepositAmount, setConstructionDepositAmount] = useState(0)
-  const [startDate, setStartDate] = useState(() => todayISODate())
-  const [termYears, setTermYears] = useState(30)
-  const [ratePercent, setRatePercent] = useState(6.29)
-  const [constructionMonths, setConstructionMonths] = useState(9)
-  const [stages, setStages] = useState<ConstructionStage[]>(DEFAULT_CONSTRUCTION_STAGES)
-  const [homeValue, setHomeValue] = useState(1281660)
-  const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
-  const [startingAccountBalance, setStartingAccountBalance] = useState(0)
-  const [monthlyIncome, setMonthlyIncome] = useState(0)
-  const [monthlyExpenses, setMonthlyExpenses] = useState(0)
-  const [constructionRent, setConstructionRent] = useState(0)
+  const { settings, update, reset } = usePersistentSettings(
+    STORAGE_KEYS.houseAndLand,
+    parseHouseAndLandSettings,
+  )
+  const {
+    landAmount,
+    constructionAmount,
+    landDepositAmount,
+    constructionDepositAmount,
+    startDate,
+    termYears,
+    ratePercent,
+    constructionMonths,
+    stages,
+    homeValue,
+    homeValueGrowthPercent,
+    startingAccountBalance,
+    monthlyIncome,
+    monthlyExpenses,
+    constructionRent,
+  } = settings
+
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [view, setView] = useState<View>('graph')
 
@@ -104,23 +112,31 @@ export function HouseAndLandCalculator() {
             monthlyExpenses={monthlyExpenses}
             constructionRent={constructionRent}
             advancedOpen={advancedOpen}
-            onLandAmountChange={setLandAmount}
-            onConstructionAmountChange={setConstructionAmount}
-            onLandDepositAmountChange={setLandDepositAmount}
-            onConstructionDepositAmountChange={setConstructionDepositAmount}
-            onStartDateChange={setStartDate}
-            onTermChange={setTermYears}
-            onRateChange={setRatePercent}
-            onConstructionMonthsChange={setConstructionMonths}
-            onStagesChange={setStages}
-            onHomeValueChange={setHomeValue}
-            onHomeValueGrowthChange={setHomeValueGrowthPercent}
-            onStartingAccountBalanceChange={setStartingAccountBalance}
-            onMonthlyIncomeChange={setMonthlyIncome}
-            onMonthlyExpensesChange={setMonthlyExpenses}
-            onConstructionRentChange={setConstructionRent}
+            onLandAmountChange={(landAmount) => update({ landAmount })}
+            onConstructionAmountChange={(constructionAmount) => update({ constructionAmount })}
+            onLandDepositAmountChange={(landDepositAmount) => update({ landDepositAmount })}
+            onConstructionDepositAmountChange={(constructionDepositAmount) =>
+              update({ constructionDepositAmount })
+            }
+            onStartDateChange={(startDate) => update({ startDate })}
+            onTermChange={(termYears) => update({ termYears })}
+            onRateChange={(ratePercent) => update({ ratePercent })}
+            onConstructionMonthsChange={(constructionMonths) => update({ constructionMonths })}
+            onStagesChange={(stages) => update({ stages })}
+            onHomeValueChange={(homeValue) => update({ homeValue })}
+            onHomeValueGrowthChange={(homeValueGrowthPercent) =>
+              update({ homeValueGrowthPercent })
+            }
+            onStartingAccountBalanceChange={(startingAccountBalance) =>
+              update({ startingAccountBalance })
+            }
+            onMonthlyIncomeChange={(monthlyIncome) => update({ monthlyIncome })}
+            onMonthlyExpensesChange={(monthlyExpenses) => update({ monthlyExpenses })}
+            onConstructionRentChange={(constructionRent) => update({ constructionRent })}
             onAdvancedOpenChange={setAdvancedOpen}
           />
+
+          <SavedDetailsNote onReset={reset} />
         </section>
 
         <aside className="card card--summary" aria-label="Your repayment">

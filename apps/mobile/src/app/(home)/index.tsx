@@ -3,19 +3,21 @@ import {
   FREQUENCY_LABELS,
   PERIODS_PER_YEAR,
   REPAYMENT_TYPE_LABELS,
+  STORAGE_KEYS,
   calculateLoan,
   describeDuration,
   formatCurrency,
   formatRepayment,
   interestOnlyYears,
-  todayISODate,
+  parseHomeLoanSettings,
   type Frequency,
   type RepaymentType,
 } from '@repayly/core';
 import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 import { BalanceChart } from '@/components/balance-chart';
+import { SavedDetails } from '@/components/saved-details';
 import { ScheduleList } from '@/components/schedule-list';
 import { Screen } from '@/components/screen';
 import { SummaryHero, TileGrid, type TileData } from '@/components/summary';
@@ -29,8 +31,12 @@ import {
   StackedField,
 } from '@/components/ui/fields';
 import { Spacing } from '@/constants/theme';
+import { usePersistentSettings } from '@/hooks/use-persistent-settings';
 
 type OutlookView = 'chart' | 'schedule';
+
+const TITLE = 'Home loan';
+const SUBTITLE = 'Adjust the details to see your estimated repayments.';
 
 const FREQUENCY_OPTIONS = (Object.keys(FREQUENCY_LABELS) as Frequency[]).map((value) => ({
   value,
@@ -42,18 +48,25 @@ const REPAYMENT_TYPE_OPTIONS = (Object.keys(REPAYMENT_TYPE_LABELS) as RepaymentT
 );
 
 export default function HomeLoanScreen() {
-  const [amount, setAmount] = useState(1128000);
-  const [startDate, setStartDate] = useState(() => todayISODate());
-  const [termYears, setTermYears] = useState(30);
-  const [ratePercent, setRatePercent] = useState(6.29);
-  const [repaymentType, setRepaymentType] = useState<RepaymentType>('principal-and-interest');
-  const [frequency, setFrequency] = useState<Frequency>('monthly');
-  const [extraRepayment, setExtraRepayment] = useState(0);
-  const [homeValue, setHomeValue] = useState(1280000);
-  const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0);
-  const [offsetBalance, setOffsetBalance] = useState(0);
-  const [monthlyIncome, setMonthlyIncome] = useState(0);
-  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
+  const { settings, loaded, update, reset } = usePersistentSettings(
+    STORAGE_KEYS.homeLoan,
+    parseHomeLoanSettings,
+  );
+  const {
+    amount,
+    startDate,
+    termYears,
+    ratePercent,
+    repaymentType,
+    frequency,
+    extraRepayment,
+    homeValue,
+    homeValueGrowthPercent,
+    offsetBalance,
+    monthlyIncome,
+    monthlyExpenses,
+  } = settings;
+
   const [view, setView] = useState<OutlookView>('chart');
 
   const result = useMemo(
@@ -82,6 +95,16 @@ export default function HomeLoanScreen() {
     ],
   );
 
+  // Holding back one frame avoids showing the starting figures and then
+  // snapping to the saved ones.
+  if (!loaded) {
+    return (
+      <Screen title={TITLE} subtitle={SUBTITLE}>
+        <ActivityIndicator style={{ marginTop: Spacing.xl }} />
+      </Screen>
+    );
+  }
+
   const periodsPerYear = PERIODS_PER_YEAR[frequency];
   const ioYears = interestOnlyYears(repaymentType);
   const interestOnly = ioYears > 0;
@@ -98,9 +121,7 @@ export default function HomeLoanScreen() {
   }
 
   return (
-    <Screen
-      title="Home loan"
-      subtitle="Adjust the details to see your estimated repayments.">
+    <Screen title={TITLE} subtitle={SUBTITLE}>
       <SummaryHero
         label="Your repayment"
         value={formatRepayment(result.totalPeriodRepayment)}
@@ -139,12 +160,17 @@ export default function HomeLoanScreen() {
       <View>
         <SectionLabel>Loan</SectionLabel>
         <Card>
-          <NumericField label="Loan amount" value={amount} onChange={setAmount} prefix="$" />
+          <NumericField
+            label="Loan amount"
+            value={amount}
+            onChange={(amount) => update({ amount })}
+            prefix="$"
+          />
           <Divider />
           <NumericField
             label="Interest rate"
             value={ratePercent}
-            onChange={setRatePercent}
+            onChange={(ratePercent) => update({ ratePercent })}
             suffix="% p.a."
             decimal
           />
@@ -152,17 +178,21 @@ export default function HomeLoanScreen() {
           <NumericField
             label="Loan term"
             value={termYears}
-            onChange={setTermYears}
+            onChange={(termYears) => update({ termYears })}
             suffix="years"
           />
           <Divider />
-          <DateField label="Start date" value={startDate} onChange={setStartDate} />
+          <DateField
+            label="Start date"
+            value={startDate}
+            onChange={(startDate) => update({ startDate })}
+          />
           <Divider />
           <SelectField
             label="Repayment type"
             value={repaymentType}
             options={REPAYMENT_TYPE_OPTIONS}
-            onChange={setRepaymentType}
+            onChange={(repaymentType) => update({ repaymentType })}
           />
           <Divider />
           <StackedField label="Repayment frequency">
@@ -170,7 +200,7 @@ export default function HomeLoanScreen() {
               fullWidth
               options={FREQUENCY_OPTIONS}
               value={frequency}
-              onChange={setFrequency}
+              onChange={(frequency) => update({ frequency })}
             />
           </StackedField>
         </Card>
@@ -179,12 +209,17 @@ export default function HomeLoanScreen() {
       <View>
         <SectionLabel>Property</SectionLabel>
         <Card>
-          <NumericField label="Home value" value={homeValue} onChange={setHomeValue} prefix="$" />
+          <NumericField
+            label="Home value"
+            value={homeValue}
+            onChange={(homeValue) => update({ homeValue })}
+            prefix="$"
+          />
           <Divider />
           <NumericField
             label="Est. value growth"
             value={homeValueGrowthPercent}
-            onChange={setHomeValueGrowthPercent}
+            onChange={(homeValueGrowthPercent) => update({ homeValueGrowthPercent })}
             suffix="% p.a."
             decimal
           />
@@ -203,7 +238,7 @@ export default function HomeLoanScreen() {
             label="Extra per repayment"
             hint={`On top of every ${FREQUENCY_ADVERBS[frequency]} repayment`}
             value={extraRepayment}
-            onChange={setExtraRepayment}
+            onChange={(extraRepayment) => update({ extraRepayment })}
             prefix="$"
           />
         </Collapsible>
@@ -216,21 +251,21 @@ export default function HomeLoanScreen() {
           <NumericField
             label="Starting balance"
             value={offsetBalance}
-            onChange={setOffsetBalance}
+            onChange={(offsetBalance) => update({ offsetBalance })}
             prefix="$"
           />
           <Divider />
           <NumericField
             label="Monthly income"
             value={monthlyIncome}
-            onChange={setMonthlyIncome}
+            onChange={(monthlyIncome) => update({ monthlyIncome })}
             prefix="$"
           />
           <Divider />
           <NumericField
             label="Monthly expenses"
             value={monthlyExpenses}
-            onChange={setMonthlyExpenses}
+            onChange={(monthlyExpenses) => update({ monthlyExpenses })}
             prefix="$"
           />
           <View style={{ padding: Spacing.lg, paddingTop: 0 }}>
@@ -272,6 +307,8 @@ export default function HomeLoanScreen() {
           )}
         </Card>
       </View>
+
+      <SavedDetails onReset={reset} />
     </Screen>
   );
 }

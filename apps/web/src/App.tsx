@@ -1,11 +1,23 @@
-import { useState } from 'react'
 import { HomeLoanCalculator } from './HomeLoanCalculator'
 import { HouseAndLandCalculator } from './HouseAndLandCalculator'
+import { usePersistentState } from './hooks/usePersistentState'
 
 type Calculator = 'home' | 'house-and-land'
 
+const CALCULATOR_KEY = 'repayly:calculator'
+
+/** Stored as the bare tab name, so there is no JSON envelope to read back. */
+const parseCalculator = (raw: string | null): Calculator =>
+  raw === 'house-and-land' ? 'house-and-land' : 'home'
+
+const serialiseCalculator = (calculator: Calculator) => calculator
+
 export default function App() {
-  const [calculator, setCalculator] = useState<Calculator>('home')
+  const [calculator, setCalculator] = usePersistentState(
+    CALCULATOR_KEY,
+    parseCalculator,
+    serialiseCalculator,
+  )
 
   return (
     <div className="page">

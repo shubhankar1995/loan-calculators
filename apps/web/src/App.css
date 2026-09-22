@@ -840,3 +840,37 @@
     margin-left: 44px;
   }
 }
+
+/* ---------- Saved details ---------- */
+
+.saved-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.saved-note__text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.saved-note__reset {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.saved-note__reset:hover {
+  text-decoration: underline;
+}

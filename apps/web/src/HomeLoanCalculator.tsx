@@ -2,34 +2,42 @@ import { useMemo, useState } from 'react'
 import { LoanInputs } from './components/LoanInputs'
 import { RepaymentsChart } from './components/RepaymentsChart'
 import { RepaymentsTable } from './components/RepaymentsTable'
+import { SavedDetailsNote } from './components/SavedDetailsNote'
+import { usePersistentSettings } from './hooks/usePersistentState'
 import {
   FREQUENCY_ADVERBS,
   PERIODS_PER_YEAR,
+  STORAGE_KEYS,
   calculateLoan,
   describeDuration,
   formatCurrency,
   formatRepayment,
   interestOnlyYears,
-  todayISODate,
-  type Frequency,
-  type RepaymentType,
+  parseHomeLoanSettings,
 } from '@repayly/core'
 
 type View = 'graph' | 'table'
 
 export function HomeLoanCalculator() {
-  const [amount, setAmount] = useState(1128000)
-  const [startDate, setStartDate] = useState(() => todayISODate())
-  const [termYears, setTermYears] = useState(30)
-  const [ratePercent, setRatePercent] = useState(6.29)
-  const [repaymentType, setRepaymentType] = useState<RepaymentType>('principal-and-interest')
-  const [frequency, setFrequency] = useState<Frequency>('monthly')
-  const [extraRepayment, setExtraRepayment] = useState(0)
-  const [homeValue, setHomeValue] = useState(1280000)
-  const [homeValueGrowthPercent, setHomeValueGrowthPercent] = useState(0)
-  const [offsetBalance, setOffsetBalance] = useState(0)
-  const [monthlyIncome, setMonthlyIncome] = useState(0)
-  const [monthlyExpenses, setMonthlyExpenses] = useState(0)
+  const { settings, update, reset } = usePersistentSettings(
+    STORAGE_KEYS.homeLoan,
+    parseHomeLoanSettings,
+  )
+  const {
+    amount,
+    startDate,
+    termYears,
+    ratePercent,
+    repaymentType,
+    frequency,
+    extraRepayment,
+    homeValue,
+    homeValueGrowthPercent,
+    offsetBalance,
+    monthlyIncome,
+    monthlyExpenses,
+  } = settings
+
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [view, setView] = useState<View>('graph')
 
@@ -89,20 +97,24 @@ export function HomeLoanCalculator() {
             monthlyIncome={monthlyIncome}
             monthlyExpenses={monthlyExpenses}
             advancedOpen={advancedOpen}
-            onAmountChange={setAmount}
-            onStartDateChange={setStartDate}
-            onTermChange={setTermYears}
-            onRateChange={setRatePercent}
-            onRepaymentTypeChange={setRepaymentType}
-            onFrequencyChange={setFrequency}
-            onExtraRepaymentChange={setExtraRepayment}
-            onHomeValueChange={setHomeValue}
-            onHomeValueGrowthChange={setHomeValueGrowthPercent}
-            onOffsetBalanceChange={setOffsetBalance}
-            onMonthlyIncomeChange={setMonthlyIncome}
-            onMonthlyExpensesChange={setMonthlyExpenses}
+            onAmountChange={(amount) => update({ amount })}
+            onStartDateChange={(startDate) => update({ startDate })}
+            onTermChange={(termYears) => update({ termYears })}
+            onRateChange={(ratePercent) => update({ ratePercent })}
+            onRepaymentTypeChange={(repaymentType) => update({ repaymentType })}
+            onFrequencyChange={(frequency) => update({ frequency })}
+            onExtraRepaymentChange={(extraRepayment) => update({ extraRepayment })}
+            onHomeValueChange={(homeValue) => update({ homeValue })}
+            onHomeValueGrowthChange={(homeValueGrowthPercent) =>
+              update({ homeValueGrowthPercent })
+            }
+            onOffsetBalanceChange={(offsetBalance) => update({ offsetBalance })}
+            onMonthlyIncomeChange={(monthlyIncome) => update({ monthlyIncome })}
+            onMonthlyExpensesChange={(monthlyExpenses) => update({ monthlyExpenses })}
             onAdvancedOpenChange={setAdvancedOpen}
           />
+
+          <SavedDetailsNote onReset={reset} />
         </section>
 
         <aside className="card card--summary" aria-label="Your repayment">

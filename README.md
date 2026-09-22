@@ -45,6 +45,22 @@ npm run ios --workspace @repayly/mobile
 
 See [`apps/mobile/README.md`](apps/mobile/README.md) for the details.
 
+## Saved details
+
+Both apps remember what you typed, so the form is already filled in next time you
+open them — `localStorage` on web, `AsyncStorage` on iOS. Each calculator is stored
+under its own key, and the web app also remembers which of the two you had open.
+There's a "Reset to defaults" control at the foot of each form.
+
+Nothing leaves the device: there is no account, no sync and no server.
+
+The stored shape, its defaults and the parsers live in
+[`packages/core/src/settings.ts`](packages/core/src/settings.ts), so both apps agree
+on what a saved form looks like. Reads are defensive — a payload that is corrupt,
+hand-edited or written by an older build falls back to the defaults field by field
+rather than breaking the form. `SETTINGS_VERSION` discards anything written against
+an incompatible shape.
+
 ## How the numbers are worked out
 
 Repayments use the standard amortisation formula, with the annual rate divided by
