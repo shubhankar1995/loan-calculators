@@ -20,6 +20,7 @@ import { Screen } from '@/components/screen';
 import { SummaryHero, TileGrid, type TileData } from '@/components/summary';
 import { Callout, Card, Divider, SectionLabel } from '@/components/ui/card';
 import { Collapsible } from '@/components/ui/collapsible';
+import { ReorderableList } from '@/components/ui/reorderable';
 import {
   DateField,
   NumericField,
@@ -317,7 +318,7 @@ interface StageEditorProps {
   onChange: (stages: ConstructionStage[]) => void;
 }
 
-/** Add, rename, reweight and remove the progress-payment stages of the build. */
+/** Add, rename, reweight, reorder and remove the progress-payment stages of the build. */
 function StageEditor({ stages, onChange }: StageEditorProps) {
   const theme = useTheme();
   const total = stages.reduce((sum, stage) => sum + Math.max(stage.percent, 0), 0);
@@ -337,38 +338,44 @@ function StageEditor({ stages, onChange }: StageEditorProps) {
 
   return (
     <View>
-      {stages.map((stage, index) => (
-        <View key={index}>
-          {index > 0 ? <Divider /> : null}
-          <View style={styles.stageRow}>
-            <View style={styles.stageName}>
-              <TextField
-                value={stage.name}
-                onChange={(name) => update(index, { name })}
-                placeholder="Stage name"
-                accessibilityLabel={`Stage ${index + 1} name`}
-              />
+      <ReorderableList
+        data={stages}
+        onReorder={onChange}
+        describeItem={(stage, index) => stage.name || `stage ${index + 1}`}
+        renderItem={(stage, index, handle) => (
+          <>
+            {index > 0 ? <Divider /> : null}
+            <View style={styles.stageRow}>
+              <View style={styles.stageName}>
+                <TextField
+                  value={stage.name}
+                  onChange={(name) => update(index, { name })}
+                  placeholder="Stage name"
+                  accessibilityLabel={`Stage ${index + 1} name`}
+                />
+              </View>
+              <View style={styles.stagePercent}>
+                <NumericInput
+                  compact
+                  value={stage.percent}
+                  onChange={(percent) => update(index, { percent })}
+                  suffix="%"
+                  decimal
+                  accessibilityLabel={`${stage.name} share of the build`}
+                />
+              </View>
+              <Pressable
+                onPress={() => remove(index)}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${stage.name}`}
+                hitSlop={8}>
+                <SymbolView name="minus.circle.fill" size={22} tintColor={theme.muted} />
+              </Pressable>
+              {handle}
             </View>
-            <View style={styles.stagePercent}>
-              <NumericInput
-                compact
-                value={stage.percent}
-                onChange={(percent) => update(index, { percent })}
-                suffix="%"
-                decimal
-                accessibilityLabel={`${stage.name} share of the build`}
-              />
-            </View>
-            <Pressable
-              onPress={() => remove(index)}
-              accessibilityRole="button"
-              accessibilityLabel={`Remove ${stage.name}`}
-              hitSlop={8}>
-              <SymbolView name="minus.circle.fill" size={22} tintColor={theme.muted} />
-            </Pressable>
-          </View>
-        </View>
-      ))}
+          </>
+        )}
+      />
 
       <View style={styles.stageFooter}>
         <Pressable onPress={add} accessibilityRole="button" style={styles.addStage} hitSlop={8}>

@@ -21,6 +21,12 @@ const light = {
   equitySoft: '#e8f5ee',
   homeValue: '#c2410c',
   homeValueSoft: '#fdf0e8',
+  // Chart series colours are kept separate from the UI accents above: they have to
+  // stay distinguishable from each other on the plot surface (including for
+  // colour-vision deficiency), which is a tighter constraint than a tint colour has.
+  seriesOwing: '#2563eb',
+  seriesHomeValue: '#c2410c',
+  seriesEquity: '#1f9254',
 };
 
 export type ThemeColor = keyof typeof light;
@@ -41,6 +47,11 @@ const dark: Theme = {
   equitySoft: '#12291d',
   homeValue: '#fb923c',
   homeValueSoft: '#2d1c10',
+  // Deliberately a step deeper than the dark UI accents: the lighter tints used for
+  // text and tabs sit too close together as adjacent lines on the dark plot surface.
+  seriesOwing: '#4a8bf2',
+  seriesHomeValue: '#db7532',
+  seriesEquity: '#28a76b',
 };
 
 export const Colors: Record<'light' | 'dark', Theme> = { light, dark };

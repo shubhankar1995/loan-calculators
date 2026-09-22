@@ -77,3 +77,26 @@ export function describeDuration(periods: number, periodsPerYear: number): strin
   if (months > 0) parts.push(`${months} month${months === 1 ? '' : 's'}`)
   return parts.length > 0 ? parts.join(' ') : 'less than a month'
 }
+
+/** Drops a trailing ".0"/".00" so compact labels read "1.5m" rather than "1.50m". */
+function trimTrailingZeros(value: string): string {
+  return value.includes('.') ? value.replace(/\.?0+$/, '') : value
+}
+
+/**
+ * Axis-friendly currency, e.g. 1_500_000 -> "$1.5m", 320_000 -> "$320k", 0 -> "$0".
+ *
+ * Hand-rolled rather than using `Intl`'s compact notation, which isn't reliably
+ * available on the JS engines the mobile app runs on.
+ */
+export function formatCompactCurrency(value: number): string {
+  const sign = value < 0 ? '-' : ''
+  const abs = Math.abs(Math.round(value))
+  if (abs < 1_000) return `${sign}$${abs}`
+  if (abs < 1_000_000) {
+    const thousands = abs / 1_000
+    return `${sign}$${trimTrailingZeros(thousands.toFixed(thousands < 10 ? 1 : 0))}k`
+  }
+  const millions = abs / 1_000_000
+  return `${sign}$${trimTrailingZeros(millions.toFixed(millions < 10 ? 2 : 1))}m`
+}

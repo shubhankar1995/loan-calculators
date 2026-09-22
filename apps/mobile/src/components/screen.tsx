@@ -1,7 +1,9 @@
 import { Stack } from 'expo-router';
+import { useRef } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
+import { ScreenScrollContext } from '@/hooks/use-screen-scroll';
 import { useTheme } from '@/hooks/use-theme';
 
 interface Props {
@@ -23,11 +25,14 @@ interface Props {
  */
 export function Screen({ title, subtitle, children }: Props) {
   const theme = useTheme();
+  // Handed to gestures inside the screen so they can outrank scrolling.
+  const scrollRef = useRef<ScrollView>(null);
 
   return (
-    <>
+    <ScreenScrollContext.Provider value={scrollRef}>
       <Stack.Screen options={{ title, contentStyle: { backgroundColor: theme.pageBg } }} />
       <ScrollView
+        ref={scrollRef}
         style={styles.flex}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"
@@ -37,7 +42,7 @@ export function Screen({ title, subtitle, children }: Props) {
         <Text style={[styles.subtitle, { color: theme.inkSoft }]}>{subtitle}</Text>
         {children}
       </ScrollView>
-    </>
+    </ScreenScrollContext.Provider>
   );
 }
 
