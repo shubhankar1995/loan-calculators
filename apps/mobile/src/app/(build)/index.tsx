@@ -274,8 +274,17 @@ export default function HouseAndLandScreen() {
           <View style={styles.calloutWrap}>
             <Callout muted>
               While you&apos;re renting, {formatCurrency(result.offsetContributionDuringConstruction)}{' '}
-              a month is swept into the offset account, rising to{' '}
-              {formatCurrency(result.offsetContributionAfterConstruction)} once the build finishes.
+              a month is swept into the offset account,{' '}
+              {result.offsetContributionAfterConstruction > result.offsetContributionDuringConstruction
+                ? 'rising to'
+                : result.offsetContributionAfterConstruction < result.offsetContributionDuringConstruction
+                  ? 'dropping to'
+                  : 'staying at'}{' '}
+              {formatCurrency(result.offsetContributionAfterConstruction)} once the build finishes
+              {result.offsetContributionAfterConstruction < result.offsetContributionDuringConstruction
+                ? ' — repayments switch from interest-only to principal and interest on the full loan'
+                : ''}
+              .
             </Callout>
           </View>
         </Collapsible>
