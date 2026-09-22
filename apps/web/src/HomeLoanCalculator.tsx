@@ -6,11 +6,14 @@ import {
   FREQUENCY_ADVERBS,
   PERIODS_PER_YEAR,
   calculateLoan,
+  describeDuration,
+  formatCurrency,
+  formatRepayment,
   interestOnlyYears,
+  todayISODate,
   type Frequency,
   type RepaymentType,
-} from './lib/loan'
-import { describeDuration, formatCurrency, formatRepayment, todayISODate } from './lib/format'
+} from '@loanlab/core'
 
 type View = 'graph' | 'table'
 

@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import { projectedHomeValue } from '../lib/loan'
-import { formatCurrency } from '../lib/format'
+import { formatCurrency, projectedHomeValue } from '@loanlab/core'
 
 interface Props {
   /** Balance at the end of every period, index 0 being the opening balance. */

@@ -1,6 +1,11 @@
 import { Fragment, useState } from 'react'
-import { type MonthlyBalance } from '../lib/loan'
-import { addMonths, formatCurrency, formatMonthYear, parseISODate } from '../lib/format'
+import {
+  addMonths,
+  formatCurrency,
+  formatMonthYear,
+  parseISODate,
+  type MonthlyBalance,
+} from '@loanlab/core'
 
 interface Row {
   key: number

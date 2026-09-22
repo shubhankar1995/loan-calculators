@@ -3,10 +3,11 @@ import {
   FREQUENCY_ADVERBS,
   FREQUENCY_LABELS,
   REPAYMENT_TYPE_LABELS,
+  formatNumber,
+  parseNumber,
   type Frequency,
   type RepaymentType,
-} from '../lib/loan'
-import { formatNumber, parseNumber } from '../lib/format'
+} from '@loanlab/core'
 
 interface Props {
   amount: number
