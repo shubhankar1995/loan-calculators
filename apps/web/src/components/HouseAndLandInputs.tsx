@@ -1,6 +1,5 @@
 import { useState, type ChangeEvent } from 'react'
-import type { ConstructionStage } from '../lib/houseAndLand'
-import { formatNumber, parseNumber } from '../lib/format'
+import { formatNumber, parseNumber, type ConstructionStage } from '@loanlab/core'
 
 interface Props {
   landAmount: number

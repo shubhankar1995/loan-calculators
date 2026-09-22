@@ -4,11 +4,14 @@ import { RepaymentsChart } from './components/RepaymentsChart'
 import { RepaymentsTable } from './components/RepaymentsTable'
 import {
   DEFAULT_CONSTRUCTION_STAGES,
+  PERIODS_PER_YEAR,
   calculateHouseAndLand,
+  describeDuration,
+  formatCurrency,
+  formatRepayment,
+  todayISODate,
   type ConstructionStage,
-} from './lib/houseAndLand'
-import { describeDuration, formatCurrency, formatRepayment, todayISODate } from './lib/format'
-import { PERIODS_PER_YEAR } from './lib/loan'
+} from '@loanlab/core'
 
 type View = 'graph' | 'table'
 

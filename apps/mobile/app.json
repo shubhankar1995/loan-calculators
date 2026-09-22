@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "LoanLab",
+    "slug": "loanlab",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "loanlab",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.loanlab.app",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.loanlab.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#2563EB",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#2563EB",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 96
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "./plugins/with-ios-scene-lifecycle"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

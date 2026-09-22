@@ -2,7 +2,7 @@
 
 Repayments, modelled properly.
 
-A React + TypeScript loan calculator (Vite) with two modes:
+A loan calculator with two modes, available as a web app and an iOS app:
 
 - **Home Loan Repayment** — enter a loan amount, term, repayment type and interest
   rate to see the repayment, the total cost of the loan, and how the principal is
@@ -11,19 +11,39 @@ A React + TypeScript loan calculator (Vite) with two modes:
   drawdown, interest-only repayments during construction, and the switch to
   principal and interest at handover.
 
+## Layout
+
+This is an npm workspaces monorepo. The repayment maths lives in one package and
+both apps import it, so a fix to the amortisation schedule lands on web and iOS at
+the same time.
+
+| Workspace                            | What it is                                        |
+| ------------------------------------ | ------------------------------------------------- |
+| [`packages/core`](packages/core)      | The repayment maths and formatters, plus its tests |
+| [`apps/web`](apps/web)                | React + Vite web app                               |
+| [`apps/mobile`](apps/mobile)          | Expo (React Native) iOS app                        |
+
 ## Running it
 
 ```bash
 npm install
-npm run dev
 ```
 
-| Script          | What it does                          |
-| --------------- | ------------------------------------- |
-| `npm run dev`   | Dev server on http://localhost:5173   |
-| `npm run build` | Typecheck and build to `dist/`        |
-| `npm test`      | Unit tests for the repayment maths    |
-| `npm run lint`  | oxlint                                |
+| Script           | What it does                                    |
+| ---------------- | ----------------------------------------------- |
+| `npm run dev`    | Web dev server on http://localhost:5173         |
+| `npm run build`  | Typecheck and build the web app to `apps/web/dist` |
+| `npm run ios`    | Start Metro and open the iOS app in the Simulator |
+| `npm test`       | Unit tests for the repayment maths               |
+| `npm run lint`   | oxlint over the web app                          |
+
+The iOS app needs Xcode and a compiled build the first time:
+
+```bash
+npm run ios --workspace @loanlab/mobile
+```
+
+See [`apps/mobile/README.md`](apps/mobile/README.md) for the details.
 
 ## How the numbers are worked out
 
@@ -47,5 +67,5 @@ separate closed-form approximations.
 - Headline repayments are rounded up to the whole dollar, the way a lender quotes
   them. Totals use the unrounded figures.
 
-The maths lives in [`src/lib/loan.ts`](src/lib/loan.ts) and is covered by
-[`src/lib/loan.test.ts`](src/lib/loan.test.ts).
+The maths lives in [`packages/core/src/loan.ts`](packages/core/src/loan.ts) and is
+covered by [`packages/core/src/loan.test.ts`](packages/core/src/loan.test.ts).
