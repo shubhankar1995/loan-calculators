@@ -66,6 +66,11 @@ interface NumericInputProps {
  * While the input has focus it holds the raw text the user typed, so the caret
  * doesn't jump around as thousands separators are inserted; on blur it goes back
  * to the formatted value.
+ *
+ * Nothing rewrites the text as the field takes focus: `selectTextOnFocus` only
+ * selects the whole value while the text stays put, and a change in the same
+ * frame as the focus would wipe whatever was typed first. So the field keeps
+ * showing its formatted value until the first keystroke replaces the selection.
  */
 export function NumericInput({
   value,
@@ -94,7 +99,6 @@ export function NumericInput({
           setDraft(text);
           onChange(parseNumber(text));
         }}
-        onFocus={() => setDraft(value === 0 ? '' : String(value))}
         onBlur={() => setDraft(null)}
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
         selectTextOnFocus
