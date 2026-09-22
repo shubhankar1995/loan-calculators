@@ -13,7 +13,7 @@ import {
   todayISODate,
   type Frequency,
   type RepaymentType,
-} from '@loanlab/core'
+} from '@repayly/core'
 
 type View = 'graph' | 'table'
 

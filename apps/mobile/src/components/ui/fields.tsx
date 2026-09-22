@@ -1,5 +1,5 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { formatNumber, parseNumber, parseISODate, toISODate } from '@loanlab/core';
+import { formatNumber, parseNumber, parseISODate, toISODate } from '@repayly/core';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';

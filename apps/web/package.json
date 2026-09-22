@@ -1,5 +1,5 @@
 {
-  "name": "@loanlab/web",
+  "name": "@repayly/web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@loanlab/core": "*",
+    "@repayly/core": "*",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },

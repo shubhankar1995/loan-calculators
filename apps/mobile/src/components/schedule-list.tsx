@@ -4,7 +4,7 @@ import {
   formatMonthYear,
   parseISODate,
   type MonthlyBalance,
-} from '@loanlab/core';
+} from '@repayly/core';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';

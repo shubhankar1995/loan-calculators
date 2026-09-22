@@ -11,7 +11,7 @@ import {
   formatRepayment,
   todayISODate,
   type ConstructionStage,
-} from '@loanlab/core'
+} from '@repayly/core'
 
 type View = 'graph' | 'table'
 

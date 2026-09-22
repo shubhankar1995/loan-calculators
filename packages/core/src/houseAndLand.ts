@@ -133,8 +133,8 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
    */
   const simulate = (
     startingOffset: number,
-    constructionContributionPerMonth: number,
-    postConstructionContributionPerMonth: number,
+    incomeLeftDuringConstructionPerMonth: number,
+    incomeLeftAfterConstructionPerMonth: number,
   ) => {
     const balances: number[] = [constructionMonths <= 0 ? totalAmount : landAmount]
     const payments: number[] = [0]
@@ -150,7 +150,9 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
       const interestBearingBalance = Math.max(priorBalance - offset, 0)
       const interest = interestBearingBalance * monthlyRate
       const balance = landAmount + drawnByMonth(month)
-      offset += constructionContributionPerMonth
+      // Whatever's left of income after expenses, rent AND this month's interest-only
+      // repayment is what actually makes it into the offset account.
+      offset += Math.max(incomeLeftDuringConstructionPerMonth - interest, 0)
       totalInterest += interest
       totalRepayments += interest
       monthsToRepay = month
@@ -167,7 +169,9 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
       const payment = Math.min(postConstructionRepayment, balance + interest)
       balance = balance + interest - payment
       if (balance < 1e-6) balance = 0
-      offset += postConstructionContributionPerMonth
+      // Whatever's left of income after expenses AND this month's repayment is what actually
+      // makes it into the offset account.
+      offset += Math.max(incomeLeftAfterConstructionPerMonth - payment, 0)
       totalInterest += interest
       totalRepayments += payment
       monthsToRepay = constructionEndMonth + month
@@ -184,21 +188,31 @@ export function calculateHouseAndLand(input: HouseAndLandInput): HouseAndLandRes
   const monthlyIncome = sanitise(input.monthlyIncome)
   const monthlyExpenses = sanitise(input.monthlyExpenses)
   const constructionRent = sanitise(input.constructionRent)
-  /** Whatever's left of income after expenses (and rent, while renting during the build) is swept into the offset. */
+  const incomeLeftDuringConstructionPerMonth = monthlyIncome - monthlyExpenses - constructionRent
+  const incomeLeftAfterConstructionPerMonth = monthlyIncome - monthlyExpenses
+  const landRepayment = landAmount * monthlyRate
+  /**
+   * What's left of income after expenses, rent and the loan repayment itself, quoted at the
+   * start of each phase (the interest-only repayment right after land settles, and the P&I
+   * repayment once construction completes) since the repayment otherwise moves during the loop.
+   */
   const offsetContributionDuringConstruction = Math.max(
-    monthlyIncome - monthlyExpenses - constructionRent,
+    incomeLeftDuringConstructionPerMonth - landRepayment,
     0,
   )
-  const offsetContributionAfterConstruction = Math.max(monthlyIncome - monthlyExpenses, 0)
+  const offsetContributionAfterConstruction = Math.max(
+    incomeLeftAfterConstructionPerMonth - postConstructionRepayment,
+    0,
+  )
   const withOffset = simulate(
     startingAccountBalance,
-    offsetContributionDuringConstruction,
-    offsetContributionAfterConstruction,
+    incomeLeftDuringConstructionPerMonth,
+    incomeLeftAfterConstructionPerMonth,
   )
   const noOffset =
     startingAccountBalance > 0 ||
-    offsetContributionDuringConstruction > 0 ||
-    offsetContributionAfterConstruction > 0
+    incomeLeftDuringConstructionPerMonth > 0 ||
+    incomeLeftAfterConstructionPerMonth > 0
       ? simulate(0, 0, 0)
       : withOffset
 

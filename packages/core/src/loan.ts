@@ -163,13 +163,12 @@ export function calculateLoan(input: LoanInput): LoanResult {
     totalPeriods,
   )
   const amortisingPeriods = totalPeriods - ioPeriods
-  // Whatever's left of income after expenses is swept into the offset account automatically,
-  // quoted per month and spread evenly across periods of the chosen frequency.
-  const offsetContributionPerMonth = Math.max(
-    sanitise(input.monthlyIncome) - sanitise(input.monthlyExpenses),
-    0,
-  )
-  const offsetContributionPerPeriod = (offsetContributionPerMonth * 12) / periodsPerYear
+  // Whatever's left of income after expenses AND the loan repayment itself is swept into the
+  // offset account automatically. The repayment varies period to period (interest-only periods
+  // shrink as the offset grows), so this is resolved inside the amortisation loop rather than
+  // as a single up-front figure.
+  const incomeLeftAfterExpensesPerMonth = sanitise(input.monthlyIncome) - sanitise(input.monthlyExpenses)
+  const incomeLeftAfterExpensesPerPeriod = (incomeLeftAfterExpensesPerMonth * 12) / periodsPerYear
 
   const scheduledRepayment =
     ioPeriods > 0 ? amount * periodRate : periodicRepayment(amount, periodRate, amortisingPeriods)
@@ -187,7 +186,7 @@ export function calculateLoan(input: LoanInput): LoanResult {
     postInterestOnlyRepayment,
     extra,
     offsetBalance,
-    offsetContributionPerPeriod,
+    incomeLeftAfterExpensesPerPeriod,
   })
 
   // Baseline without extra repayments, so we can show what the extra buys.
@@ -202,13 +201,13 @@ export function calculateLoan(input: LoanInput): LoanResult {
           postInterestOnlyRepayment,
           extra: 0,
           offsetBalance,
-          offsetContributionPerPeriod,
+          incomeLeftAfterExpensesPerPeriod,
         })
       : withExtra
 
   // Baseline without an offset account, so we can show what the offset buys.
   const noOffset =
-    offsetBalance > 0 || offsetContributionPerPeriod > 0
+    offsetBalance > 0 || incomeLeftAfterExpensesPerPeriod > 0
       ? amortise({
           amount,
           periodRate,
@@ -218,7 +217,7 @@ export function calculateLoan(input: LoanInput): LoanResult {
           postInterestOnlyRepayment,
           extra,
           offsetBalance: 0,
-          offsetContributionPerPeriod: 0,
+          incomeLeftAfterExpensesPerPeriod: 0,
         })
       : withExtra
 
@@ -262,7 +261,7 @@ interface AmortiseArgs {
   postInterestOnlyRepayment?: number
   extra: number
   offsetBalance: number
-  offsetContributionPerPeriod: number
+  incomeLeftAfterExpensesPerPeriod: number
 }
 
 function amortise({
@@ -274,7 +273,7 @@ function amortise({
   postInterestOnlyRepayment,
   extra,
   offsetBalance,
-  offsetContributionPerPeriod,
+  incomeLeftAfterExpensesPerPeriod,
 }: AmortiseArgs) {
   const balances: number[] = [amount]
   const payments: number[] = [0]
@@ -300,7 +299,9 @@ function amortise({
 
     balance = balance + interest - payment
     if (balance < 1e-6) balance = 0
-    offset += offsetContributionPerPeriod
+    // Whatever's left of income after expenses AND this period's repayment is what actually
+    // makes it into the offset account.
+    offset += Math.max(incomeLeftAfterExpensesPerPeriod - payment, 0)
 
     totalInterest += interest
     totalRepayments += payment

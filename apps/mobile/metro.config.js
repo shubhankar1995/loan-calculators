@@ -1,4 +1,4 @@
-// Metro needs to be told about the monorepo so it can follow the `@loanlab/core`
+// Metro needs to be told about the monorepo so it can follow the `@repayly/core`
 // symlink out of apps/mobile and watch the shared maths for changes.
 const path = require('node:path');
 const { getDefaultConfig } = require('expo/metro-config');

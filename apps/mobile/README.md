@@ -1,7 +1,7 @@
 # Repayly for iOS
 
 The Expo (React Native) app. It shares every repayment calculation with the web
-app through [`@loanlab/core`](../../packages/core) — only the interface is
+app through [`@repayly/core`](../../packages/core) — only the interface is
 written twice.
 
 ## Running it
@@ -9,18 +9,18 @@ written twice.
 From the repo root, `npm install` once, then:
 
 ```bash
-npm run ios --workspace @loanlab/mobile
+npm run ios --workspace @repayly/mobile
 ```
 
 The first run generates the native `ios/` project, installs pods and compiles,
-which takes a few minutes. After that, `npm start --workspace @loanlab/mobile`
+which takes a few minutes. After that, `npm start --workspace @repayly/mobile`
 launches Metro and reloads on save.
 
 If CocoaPods fails with `Unicode Normalization not appropriate for ASCII-8BIT`,
 your shell has no UTF-8 locale. Run the command with one:
 
 ```bash
-LANG=en_US.UTF-8 npm run ios --workspace @loanlab/mobile
+LANG=en_US.UTF-8 npm run ios --workspace @repayly/mobile
 ```
 
 ## How it's put together

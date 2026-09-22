@@ -40,7 +40,7 @@ npm install
 The iOS app needs Xcode and a compiled build the first time:
 
 ```bash
-npm run ios --workspace @loanlab/mobile
+npm run ios --workspace @repayly/mobile
 ```
 
 See [`apps/mobile/README.md`](apps/mobile/README.md) for the details.

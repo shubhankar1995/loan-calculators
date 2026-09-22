@@ -7,7 +7,7 @@ import {
   parseNumber,
   type Frequency,
   type RepaymentType,
-} from '@loanlab/core'
+} from '@repayly/core'
 
 interface Props {
   amount: number

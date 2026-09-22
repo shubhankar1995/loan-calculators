@@ -1,4 +1,4 @@
-import { formatCurrency, projectedHomeValue } from '@loanlab/core';
+import { formatCurrency, projectedHomeValue } from '@repayly/core';
 import { useMemo, useRef, useState } from 'react';
 import {
   PanResponder,

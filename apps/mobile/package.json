@@ -1,5 +1,5 @@
 {
-  "name": "@loanlab/mobile",
+  "name": "@repayly/mobile",
   "version": "1.0.0",
   "private": true,
   "main": "expo-router/entry",
@@ -12,7 +12,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@loanlab/core": "*",
+    "@repayly/core": "*",
     "@react-native-community/datetimepicker": "9.1.0",
     "expo": "~57.0.24",
     "expo-constants": "~57.0.19",

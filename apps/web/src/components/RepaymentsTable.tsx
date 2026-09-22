@@ -5,7 +5,7 @@ import {
   formatMonthYear,
   parseISODate,
   type MonthlyBalance,
-} from '@loanlab/core'
+} from '@repayly/core'
 
 interface Row {
   key: number

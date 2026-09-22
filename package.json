@@ -1,5 +1,5 @@
 {
-  "name": "loanlab",
+  "name": "repayly",
   "private": true,
   "version": "0.0.0",
   "workspaces": [
@@ -7,11 +7,11 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @loanlab/web",
-    "build": "npm run build --workspace @loanlab/web",
-    "lint": "npm run lint --workspace @loanlab/web",
-    "ios": "npm run ios --workspace @loanlab/mobile",
-    "start": "npm run start --workspace @loanlab/mobile",
+    "dev": "npm run dev --workspace @repayly/web",
+    "build": "npm run build --workspace @repayly/web",
+    "lint": "npm run lint --workspace @repayly/web",
+    "ios": "npm run ios --workspace @repayly/mobile",
+    "start": "npm run start --workspace @repayly/mobile",
     "test": "npm run test --workspaces --if-present"
   }
 }

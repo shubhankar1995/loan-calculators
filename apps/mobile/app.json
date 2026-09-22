@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "LoanLab",
-    "slug": "loanlab",
+    "name": "Repayly",
+    "slug": "repayly",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "loanlab",
+    "scheme": "repayly",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "bundleIdentifier": "com.loanlab.app",
+      "bundleIdentifier": "com.repayly.app",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.loanlab.app",
+      "package": "com.repayly.app",
       "adaptiveIcon": {
         "backgroundColor": "#2563EB",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -231,18 +231,39 @@ describe('calculateHouseAndLand - offset account', () => {
     expect(result.totalInterest).toBe(0)
   })
 
-  it('sweeps leftover income into the offset, reduced by rent while the build is ongoing', () => {
+  it('sweeps leftover income into the offset, net of rent and the loan repayment itself', () => {
+    const monthlyIncome = 10000
+    const monthlyExpenses = 3000
+    const constructionRent = 2000
     const result = calculateHouseAndLand({
       ...base,
-      monthlyIncome: 8000,
-      monthlyExpenses: 5000,
-      constructionRent: 2000,
+      monthlyIncome,
+      monthlyExpenses,
+      constructionRent,
     })
-    expect(result.offsetContributionDuringConstruction).toBeCloseTo(1000, 6)
-    expect(result.offsetContributionAfterConstruction).toBeCloseTo(3000, 6)
+    const landRepayment = (base.landAmount * base.annualRatePercent) / 100 / 12
+    const remainingMonths = base.termYears * 12 - base.constructionMonths
+    const postConstructionRepayment = periodicRepayment(
+      base.landAmount + base.constructionAmount,
+      base.annualRatePercent / 100 / 12,
+      remainingMonths,
+    )
+    expect(result.offsetContributionDuringConstruction).toBeCloseTo(
+      monthlyIncome - monthlyExpenses - constructionRent - landRepayment,
+      6,
+    )
+    expect(result.offsetContributionAfterConstruction).toBeCloseTo(
+      monthlyIncome - monthlyExpenses - postConstructionRepayment,
+      6,
+    )
+    // The simulation itself sweeps the same net-of-repayment amount, not just the display figure.
+    expect(result.monthlyBalances[1].offsetBalance).toBeCloseTo(
+      result.offsetContributionDuringConstruction,
+      6,
+    )
   })
 
-  it('never contributes a negative amount when expenses and rent outweigh income', () => {
+  it('never contributes a negative amount when expenses, rent and the repayment outweigh income', () => {
     const result = calculateHouseAndLand({
       ...base,
       monthlyIncome: 3000,
@@ -250,7 +271,7 @@ describe('calculateHouseAndLand - offset account', () => {
       constructionRent: 2000,
     })
     expect(result.offsetContributionDuringConstruction).toBe(0)
-    expect(result.offsetContributionAfterConstruction).toBeGreaterThan(0)
+    expect(result.offsetContributionAfterConstruction).toBe(0)
   })
 })
 

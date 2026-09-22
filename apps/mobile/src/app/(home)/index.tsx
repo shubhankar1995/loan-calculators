@@ -11,7 +11,7 @@ import {
   todayISODate,
   type Frequency,
   type RepaymentType,
-} from '@loanlab/core';
+} from '@repayly/core';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
